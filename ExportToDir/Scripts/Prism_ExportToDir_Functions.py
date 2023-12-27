@@ -53,7 +53,6 @@ import zipfile
 import tempfile
 import json
 import ntpath
-from functools import partial         # NEEDED ???
 
 from ExportToDir import ExportToDir
 
@@ -104,7 +103,7 @@ class Prism_ExportToDir_Functions(object):
         self.saveSettings()
 
     #   Called with Callback - Project Browser
-    @err_catcher(name=__name__)                                                     #   TODO
+    @err_catcher(name=__name__)                                         #   TODO  There is no Callback for Project Browser RCL Menu
     def projectBrowserContextMenuRequested(self, origin, menu):
 
 
@@ -114,10 +113,8 @@ class Prism_ExportToDir_Functions(object):
     #   Called with Callback - SceneFiles Browser
     @err_catcher(name=__name__)
     def openPBFileContextMenu(self, origin, rcmenu, filePath):
-
         self.menuContext = "Scene Files:"
         self.singleFileMode = True
-
 
         #   Retrieves File Info from Core
         fileData = self.core.getScenefileData(filePath)
@@ -138,11 +135,10 @@ class Prism_ExportToDir_Functions(object):
     #   Called with Callback - Product Browser
     @err_catcher(name=__name__)
     def productSelectorContextMenuRequested(self, origin, viewUi, pos, rcmenu):
-
         version = origin.getCurrentVersion()
         if not version:
             return
-                                                                                        #   Look at ProductBrowser line 922
+
         self.menuContext = "Product Files:"
         self.singleFileMode = True
 
@@ -203,7 +199,9 @@ class Prism_ExportToDir_Functions(object):
 
         elif len(origin.seq) > 1:
             self.singleFileMode = False
-            fileData["currentFrame"] = origin.seq[origin.getCurrentFrame()]
+            fileData["currentFrame"] = os.path.basename(origin.seq[origin.getCurrentFrame()])
+            filenameNoExt = os.path.splitext(fileData["currentFrame"])[0]
+            fileData["frameNumber"] = os.path.splitext(filenameNoExt)[1]
             fileData["sourceFilename"] = fileData["source"]
 
             fileList = []
@@ -211,8 +209,7 @@ class Prism_ExportToDir_Functions(object):
                 fileList.append(file)
             fileData["sourcePath"] = fileList
 
-        self.loadCoreData(fileData)        
-
+        self.loadCoreData(fileData)
 
         sendToAct = QAction("Export to Dir...", self.core.pb.mediaBrowser)
         sendToAct.triggered.connect(lambda: self.sendToDialogue())
@@ -437,6 +434,7 @@ class Prism_ExportToDir_Functions(object):
             if pluginName is not None:
                 self.loadedPlugins.append(plugin)
 
+
     #   Receives File Data and Populates Variables
     @err_catcher(name=__name__)
     def loadCoreData(self, fileData):
@@ -461,6 +459,7 @@ class Prism_ExportToDir_Functions(object):
             self.sourcePath = ""            
             self.sourceFilename = ""
             self.currentFrame = None
+            self.frameNumber = ""
             self.sourceExt = ""
 
             if "project_name" in fileData:
@@ -497,6 +496,8 @@ class Prism_ExportToDir_Functions(object):
                 self.sourceFilename = fileData["sourceFilename"]
             if "currentFrame" in fileData:
                 self.currentFrame = fileData["currentFrame"]
+            if "frameNumber" in fileData:
+                self.frameNumber = fileData["frameNumber"]                
             if "extension" in fileData:
                 self.sourceExt = fileData["extension"]
 
@@ -525,6 +526,7 @@ class Prism_ExportToDir_Functions(object):
                       "sourceDir",
                       "sourceFilename",
                       "currentFrame",
+                      "fameNumber",
                       "sourceExt"]
 
         for attribute in attributes:
@@ -725,30 +727,19 @@ class Prism_ExportToDir_Functions(object):
 
         if self.singleFileMode:
             if self.currentFrame:
-                baseName = os.path.basename(self.currentFrame)           #   TODO
+                baseName = os.path.basename(self.currentFrame)
                 fileNameNoExt = os.path.splitext(baseName)[0]
             else:
                 fileNameNoExt = os.path.splitext(self.sourceFilename)[0]
-
-
-
-#            if isinstance(self.sourceFilename, str):
-#                fileNameNoExt, ext = os.path.splitext(self.sourceFilename)
-#            else:
-#                baseName = os.path.basename(self.sourcePath[self.sourceCurrentFrame])           #   TODO
-#                fileNameNoExt, ext = os.path.splitext(baseName)
 
         else:
             dlg.rb_singleImage.show()
             dlg.rb_imageSeq.show()
             
-            fileNameNoExt = os.path.splitext(self.sourceFilename)[0]  
-
-#            match = re.search(r'\d+$', fileNameNoExt)
-#            if match:
-#                numeric_length = match.end() - match.start()
-#                placeholder = '#' * numeric_length
-#                fileNameNoExt = fileNameNoExt[:match.start()] + placeholder
+            if dlg.rb_imageSeq.isChecked():
+                fileNameNoExt = os.path.splitext(self.sourceFilename)[0]
+            else:
+                fileNameNoExt = os.path.splitext(self.currentFrame)[0]
             
         formattedNameNoExt = self.formatName(fileNameNoExt)
         formattedName = formattedNameNoExt + self.sourceExt
@@ -770,6 +761,7 @@ class Prism_ExportToDir_Functions(object):
             "@AOV@": self.aov,
             "@CHANNEL@": self.channel,
             "@FILENAME@": formattedName,
+            "@FRAME@": self.frameNumber,
             "@FILETYPE@": self.sourceExt.removeprefix(".").upper(),
             "@EXTENSION@": self.sourceExt
         }
@@ -779,13 +771,10 @@ class Prism_ExportToDir_Functions(object):
         for placeholder, value in replacements.items():
             placeholderName = placeholderName.replace(placeholder, value)
 
-
         dlg.e_mediaName.setText(placeholderName)
 
         if not load:
             self.refreshOutputName(dlg)
-
-
 
 
     def formatName(self, inputName):
@@ -899,20 +888,12 @@ class Prism_ExportToDir_Functions(object):
 
         self.resetProgBar(dlg)
 
-        sourcePath = self.sourcePath
         outputName = dlg.e_mediaName.text()
         fileName, extension = os.path.splitext(outputName)
 
         if fileName == "":
             self.core.popup("The Output Filename is blank.  Please enter a Filename")
             return
-
-        if isinstance(self.sourcePath, str) == False:
-            if not dlg.rb_singleImage.isChecked() and not dlg.rb_imageSeq.isChecked():
-                self.core.popup("Please Select Copy Type:\n\nSingle Image or Sequence")
-                return
-            elif dlg.rb_singleImage.isChecked():
-                sourcePath = self.sourcePath[0]
 
         outputPath = dlg.e_outputName.text()
 
@@ -922,6 +903,14 @@ class Prism_ExportToDir_Functions(object):
 
         # Case #1: Copy a single file
         if self.singleFileMode:
+            if self.menuContext == "Media Files:":
+                if self.currentFrame:
+                    sourcePath = os.path.join(self.sourceDir, self.currentFrame)
+                else:
+                    sourcePath = self.sourcePath
+            else:
+                sourcePath = self.sourcePath
+
             if os.path.exists(outputPath):
                 if self.executePopUp(dlg, "File", outputPath) == False:
                     return
@@ -934,6 +923,7 @@ class Prism_ExportToDir_Functions(object):
 
         # Case #2: Copy entire directory
         elif not self.singleFileMode and not zipFiles:
+
             sourceDir = os.path.dirname(self.sourcePath[0])
             outputDir = os.path.dirname(outputPath)
 
@@ -999,7 +989,8 @@ class CopyThread(QObject):
             originalPath = self.sourcePath
             self.tempDir = None
 
-            if self.case == 1:      #   Single File
+            #   Single File
+            if self.case == 1:
                 if self.zipFiles:
 
                     filename = os.path.basename(originalPath)
@@ -1022,12 +1013,12 @@ class CopyThread(QObject):
                     self.dlg.l_status.setText("Complete.")
                     self.dlg.progressBar.setStyleSheet(PROG_GREEN)
 
-
-
-            elif self.case == 2:    #   Directory without Zip
+            #   Directory without Zip
+            elif self.case == 2:    
                 self.copyDirectory(originalPath, self.outputPath)
 
-            elif self.case ==3:     #   Directory with Zip
+            #   Directory with Zip
+            elif self.case ==3:
                 zipFilename = f"{os.path.basename(self.outputPath)}.zip"
                 zipPath = self.executeZip(originalPath, zipFilename)
 
@@ -1046,26 +1037,33 @@ class CopyThread(QObject):
     @err_catcher(name=__name__)
     def copyFile(self, src, dest, showProg=True):
 
-        if showProg:
-            self.progressUpdated.emit(0)
-            self.dlg.l_status.setText("Copying...")
+        try:
+            if showProg:
+                self.progressUpdated.emit(0)
+                self.dlg.l_status.setText("Copying...")
 
-        totalSize = os.path.getsize(src)
-        copiedSize = 0
-        with open(src, 'rb') as srcFile, open(dest, 'wb') as destFile:
-            while True:
-                chunk = srcFile.read(4096)
-                if not chunk:
-                    break
-                destFile.write(chunk)
-                copiedSize += len(chunk)
-                if showProg:
-                    progressPercentage = int(copiedSize / totalSize * 100)
-                    self.progressUpdated.emit(progressPercentage)
-        
-        if showProg:
-            self.dlg.l_status.setText("Complete.")
-            self.dlg.progressBar.setStyleSheet(PROG_GREEN)
+            totalSize = os.path.getsize(src)
+            copiedSize = 0
+            with open(src, 'rb') as srcFile, open(dest, 'wb') as destFile:
+                while True:
+                    chunk = srcFile.read(4096)
+                    if not chunk:
+                        break
+                    destFile.write(chunk)
+                    copiedSize += len(chunk)
+                    if showProg:
+                        progressPercentage = int(copiedSize / totalSize * 100)
+                        self.progressUpdated.emit(progressPercentage)
+            
+            if showProg:
+                self.dlg.l_status.setText("Complete.")
+                self.dlg.progressBar.setStyleSheet(PROG_GREEN)
+
+        except Exception as e:
+            self.dlg.l_status.setText("ERROR")
+            self.dlg.progressBar.setStyleSheet(PROG_RED)
+            self.progressUpdated.emit(100)
+            self.core.popup(e)
 
 
     @err_catcher(name=__name__)
@@ -1122,31 +1120,39 @@ class CopyThread(QObject):
 
         self.dlg.l_status.setText("Zipping...")
 
-        with zipfile.ZipFile(zipPath, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-            if os.path.isdir(originalPath):
-                totalFiles = self.dirFileAmount(originalPath)
-                zippedFiles = 0
+        try:
+            with zipfile.ZipFile(zipPath, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                if os.path.isdir(originalPath):
+                    totalFiles = self.dirFileAmount(originalPath)
+                    zippedFiles = 0
 
-                # Iterate over files directly in the specified directory
-                for file in os.listdir(originalPath):
-                    file_path = os.path.join(originalPath, file)
-                    # Ensure it's a file (not a directory)
-                    if os.path.isfile(file_path):
-                        arcname = os.path.relpath(file_path, originalPath)
-                        zip_file.write(file_path, arcname=arcname)
-                        zippedFiles += 1
-                        progressPercentage = int(zippedFiles / totalFiles * 100)
-                        self.progressUpdated.emit(progressPercentage)
+                    # Iterate over files directly in the specified directory
+                    for file in os.listdir(originalPath):
+                        file_path = os.path.join(originalPath, file)
+                        # Ensure it's a file (not a directory)
+                        if os.path.isfile(file_path):
+                            arcname = os.path.relpath(file_path, originalPath)
+                            zip_file.write(file_path, arcname=arcname)
+                            zippedFiles += 1
+                            progressPercentage = int(zippedFiles / totalFiles * 100)
+                            self.progressUpdated.emit(progressPercentage)
 
-            else:
-                self.progressUpdated.emit(20)
+                else:
+                    self.progressUpdated.emit(20)
 
-                arcname = os.path.basename(originalPath)
-                zip_file.write(originalPath, arcname=arcname)
+                    arcname = os.path.basename(originalPath)
+                    zip_file.write(originalPath, arcname=arcname)
 
-                self.progressUpdated.emit(75)
+                    self.progressUpdated.emit(75)
 
-        return zipPath
+            return zipPath
+    
+        except Exception as e:
+            self.dlg.l_status.setText("ERROR.")
+            self.progressUpdated.emit(100)
+            self.dlg.progressBar.setStyleSheet(PROG_RED)
+            self.core.popup(e)  # TESTING
+
 
 ########    TODO    ERRORS
     
