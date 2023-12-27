@@ -1,0 +1,18 @@
+{
+    "NamingScheme": {
+        "Scene Files:": "@PROJECT@--@FILENAME@",
+        "Product Files:": "@PROJECT@--@FILENAME@",
+        "Media Files:": "@PROJECT@--@SHOT@@ASSET@--@IDENTIFIER@_@VERSION@@EXTENSION@",
+        "Library Files:": "@PROJECT@--@FILENAME@"
+    },
+    "ExportPaths": [
+        {
+            "Name": "Desktop",
+            "Path": "C:/Users/Joshua Breckeen/Desktop"
+        },
+        {
+            "Name": "Client Share",
+            "Path": "D:/Dropbox/Alta Arts/01_Client Share"
+        }
+    ]
+}
