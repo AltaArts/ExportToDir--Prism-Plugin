@@ -6,13 +6,5 @@
         "Library Files:": "@PROJECT@--@FILENAME@"
     },
     "ExportPaths": [
-        {
-            "Name": "Desktop",
-            "Path": "C:/Users/Joshua Breckeen/Desktop"
-        },
-        {
-            "Name": "Client Share",
-            "Path": "D:/Dropbox/Alta Arts/01_Client Share"
-        }
     ]
 }
