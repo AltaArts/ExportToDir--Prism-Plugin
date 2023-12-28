@@ -272,7 +272,7 @@ class Prism_ExportToDir_Functions(object):
     def userSettings_loadUI(self, origin):  # ADDING "Export to Dir" TO SETTINGS
 
         # Loads Settings File
-        namingSchemeData, exportToList = self.loadSettings()
+        namingTemplateData, exportToList = self.loadSettings()
 
         self.getLoadedPlugins()
 
@@ -280,9 +280,9 @@ class Prism_ExportToDir_Functions(object):
         origin.w_exportTo = QWidget()
         origin.lo_exportTo = QVBoxLayout(origin.w_exportTo)
 
-        # Add a new box for "File Naming Scheme" before "Export to Dir"
-        gb_fileNamingScheme = QGroupBox("File Naming Scheme")
-        lo_fileNamingScheme = QVBoxLayout()
+        # Add a new box for "File Naming Template" before "Export to Dir"
+        gb_fileNamingTemplate = QGroupBox("File Naming Template                         (templates used to build placeholder name)")
+        lo_fileNamingTemplate = QVBoxLayout()
 
         #   Template for Tooltips
         templates = {
@@ -326,35 +326,35 @@ class Prism_ExportToDir_Functions(object):
         self.e_naming_LibraryFiles.setToolTip(libraryFileTip)        
 
         # Add a grid layout
-        lo_fileNamingScheme = QGridLayout()
+        lo_fileNamingTemplate = QGridLayout()
 
         # Add each QLabel and QLineEdit to the layout with the same starting position
-        lo_fileNamingScheme.addWidget(self.l_naming_SceneFiles, 0, 0)
-        lo_fileNamingScheme.addWidget(self.e_naming_SceneFiles, 0, 1)
+        lo_fileNamingTemplate.addWidget(self.l_naming_SceneFiles, 0, 0)
+        lo_fileNamingTemplate.addWidget(self.e_naming_SceneFiles, 0, 1)
 
-        lo_fileNamingScheme.addWidget(self.l_naming_ProductFiles, 1, 0)
-        lo_fileNamingScheme.addWidget(self.e_naming_ProductFiles, 1, 1)
+        lo_fileNamingTemplate.addWidget(self.l_naming_ProductFiles, 1, 0)
+        lo_fileNamingTemplate.addWidget(self.e_naming_ProductFiles, 1, 1)
 
-        lo_fileNamingScheme.addWidget(self.l_naming_MediaFiles, 2, 0)
-        lo_fileNamingScheme.addWidget(self.e_naming_MediaFiles, 2, 1)
+        lo_fileNamingTemplate.addWidget(self.l_naming_MediaFiles, 2, 0)
+        lo_fileNamingTemplate.addWidget(self.e_naming_MediaFiles, 2, 1)
 
         if "Libraries" in self.loadedPlugins:
-            lo_fileNamingScheme.addWidget(self.l_naming_LibraryFiles, 3, 0)
-            lo_fileNamingScheme.addWidget(self.e_naming_LibraryFiles, 3, 1)
+            lo_fileNamingTemplate.addWidget(self.l_naming_LibraryFiles, 3, 0)
+            lo_fileNamingTemplate.addWidget(self.e_naming_LibraryFiles, 3, 1)
 
         # Set column stretch to make sure line edits are aligned
-        lo_fileNamingScheme.setColumnStretch(1, 1)
+        lo_fileNamingTemplate.setColumnStretch(1, 1)
 
-        gb_fileNamingScheme.setLayout(lo_fileNamingScheme)
+        gb_fileNamingTemplate.setLayout(lo_fileNamingTemplate)
 
-        # Add the "File Naming Scheme" box before the "Export to Dir" group box
-        origin.lo_exportTo.addWidget(gb_fileNamingScheme)
+        # Add the "File Naming Template" box before the "Export to Dir" group box
+        origin.lo_exportTo.addWidget(gb_fileNamingTemplate)
 
         spacer = QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Fixed)
         origin.lo_exportTo.addItem(spacer)
 
         # Add the "Export to Dir" group box
-        gb_exportTo = QGroupBox("User Export to Dir Locations")
+        gb_exportTo = QGroupBox("User Export to Dir Locations                   (will be available in ExportToDir in addition to Project Locations)")
         lo_exportTo = QVBoxLayout()
         gb_exportTo.setLayout(lo_exportTo)
 
@@ -393,10 +393,10 @@ class Prism_ExportToDir_Functions(object):
         b_removeoexportTo.clicked.connect(lambda: self.removeExportToDir(origin, self.tw_exportTo))
 
         # Populates lists from Settings File Data
-        self.e_naming_SceneFiles.setText(namingSchemeData.get("Scene Files:", ""))
-        self.e_naming_ProductFiles.setText(namingSchemeData.get("Product Files:", ""))
-        self.e_naming_MediaFiles.setText(namingSchemeData.get("Media Files:", ""))
-        self.e_naming_LibraryFiles.setText(namingSchemeData.get("Library Files:", ""))
+        self.e_naming_SceneFiles.setText(namingTemplateData.get("Scene Files:", ""))
+        self.e_naming_ProductFiles.setText(namingTemplateData.get("Product Files:", ""))
+        self.e_naming_MediaFiles.setText(namingTemplateData.get("Media Files:", ""))
+        self.e_naming_LibraryFiles.setText(namingTemplateData.get("Library Files:", ""))
 
         for item in exportToList:
             row_position = self.tw_exportTo.rowCount()
@@ -542,13 +542,13 @@ class Prism_ExportToDir_Functions(object):
             with open(settingsFile, "r") as json_file:
                 data = json.load(json_file)
 
-                namingScheme = data.get("NamingScheme", {})
+                namingTemplate = data.get("NamingTemplate", {})
                 exportPaths = data.get("ExportPaths", [])
 
                 if context is None:
-                    return namingScheme, exportPaths
+                    return namingTemplate, exportPaths
                 else:
-                    template = namingScheme.get(context)
+                    template = namingTemplate.get(context)
                     return template
 
         except FileNotFoundError:
@@ -559,21 +559,21 @@ class Prism_ExportToDir_Functions(object):
     @err_catcher(name=__name__)
     def saveSettings(self):
 
-        namingSchemeData = {}
+        namingTemplateData = {}
         exportPathsData = []
-        NameSchemes = ["SceneFiles",
+        NameTemplates = ["SceneFiles",
                       "ProductFiles",
                       "MediaFiles",
                       "LibraryFiles"]
 
-        # Populates naming scheme data from line edits
-        for name in NameSchemes:
+        # Populates naming Template data from line edits
+        for name in NameTemplates:
             label = getattr(self, f"l_naming_{name}")
             line_edit = getattr(self, f"e_naming_{name}")
 
             labelText = label.text()
             contents = line_edit.text()
-            namingSchemeData[labelText] = contents
+            namingTemplateData[labelText] = contents
 
         # Populates export paths data from UI List
         for row in range(self.tw_exportTo.rowCount()):
@@ -587,7 +587,7 @@ class Prism_ExportToDir_Functions(object):
 
         # Save both dictionaries
         with open(settingsFile, "w") as json_file:
-            json.dump({"NamingScheme": namingSchemeData, "ExportPaths": exportPathsData}, json_file, indent=4)
+            json.dump({"NamingTemplate": namingTemplateData, "ExportPaths": exportPathsData}, json_file, indent=4)
 
 
     #   Adds Dir to ExportToDir User Settings GUI
@@ -658,7 +658,7 @@ class Prism_ExportToDir_Functions(object):
                     self.saveDirs.append(locPath)
 
         # Load Dirs from Export to Dir User Settings
-        namingScheme, exportPaths = self.loadSettings()
+        namingTemplate, exportPaths = self.loadSettings()
         for item in exportPaths:
             path = item.get("Path")
             if path and path not in projectPaths:
