@@ -1,10 +1,9 @@
 {
-    "NamingScheme": {
+    "NamingTemplate": {
         "Scene Files:": "@PROJECT@--@FILENAME@",
         "Product Files:": "@PROJECT@--@FILENAME@",
-        "Media Files:": "@PROJECT@--@SHOT@@ASSET@--@IDENTIFIER@_@VERSION@@EXTENSION@",
+        "Media Files:": "@PROJECT@--@FILENAME@",
         "Library Files:": "@PROJECT@--@FILENAME@"
     },
-    "ExportPaths": [
-    ]
+    "ExportPaths": []
 }
