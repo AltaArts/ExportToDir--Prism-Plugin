@@ -17,7 +17,7 @@ The ExportToDir plugin adds a menu tab in Prism2's user settings that allows the
 The template filenames can be configured separately for each export type (Scene file, Product, Media item, Library item) and are denoted with @@ and contain data such as "Project Name", "Shot Name", "Version" etc.  
 
 *example:*
-		@PROJECT@--@SEQUENCE@__@SHOT@__@TASK@__@VERSION@@EXTENSION@
+		@PROJECT@--@SEQUENCE@\_@SHOT@\_@TASK@\_@VERSION@@EXTENSION@
 		
 When the dialogue is shown, the template items will be replaced with the actual data if it exists.  The resulting filename can always be edited afterwards in the dialogue.
 
