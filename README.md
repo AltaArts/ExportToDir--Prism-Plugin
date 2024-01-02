@@ -14,7 +14,12 @@ ExportToDir adds a right-click item to Prism2's GUI that opens a dialogue to cus
 
 The ExportToDir plugin adds a menu tab in Prism2's user settings that allows the user to create template filenames, and custom directories used for the export.
 
-The template filenames can be configured separately for each export type (Scene file, Product, Media item, Library item) and are denoted with @@ and contain data such as "Project Name", "Shot Name", "Version" etc.  When the dialogue is shown, the template items will be replaced with the actual data if it exists.  The resulting filename can always be edited afterwards in the dialogue.
+The template filenames can be configured separately for each export type (Scene file, Product, Media item, Library item) and are denoted with @@ and contain data such as "Project Name", "Shot Name", "Version" etc.  
+
+*example:*
+		@PROJECT@--@SEQUENCE@_@SHOT@_@TASK@_@VERSION@@EXTENSION@
+		
+When the dialogue is shown, the template items will be replaced with the actual data if it exists.  The resulting filename can always be edited afterwards in the dialogue.
 
 Directories added to the ExportToDir menu will be available for all projects.  An example is if you have a client share setup and want to quickly drop a file that will be synced to the cloud.  These directories will be in the dropdown of the dialogue, along with any directories listed in Project Settings -> Locations.  The dialogue also allows for a custom output directory to be selected.
 
