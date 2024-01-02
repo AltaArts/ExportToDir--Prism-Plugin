@@ -9,7 +9,7 @@ https://prism-pipeline.com/
 
 
 ## **Plugin Usage**
-ExportToDir adds a right-click item to Prism2's GUI that opens a dialogue to customize an export file name, directory, and allow the file(s) to be zipped.  Using ExportToDir does not alter the original files at all.
+ExportToDir adds a right-click item to Prism2's GUI that opens a dialogue to customize an export file name and directory, and add the option to have the file(s) zipped.  Using ExportToDir does not alter the original files at all.
 
 The ExportToDir plugin adds a menu tab in Prism2's user settings that allows the user to create template filenames, and custom directoies used for the export.
 
@@ -17,21 +17,17 @@ The template filenames can be configured seperatly for each export type (Scene f
 
 Directories added to the ExportToDir menu will be available for all projects.  An example is if you have a client share setup and want to quickly drop in a file that will be synced to the cloud.  These directories will be in the dropdown of the dialogue, along with any directories listed in Project Settings -> Locations.  The dialogue also allow for a custom output directory to be selected.
 
+Using the .zip checkbox will create an archive and copy the files using DEFLATE.  If the selected export is an image sequence, it will copy all the image files into the .zip file.
 
 ## **Installation**
 
-### Copy method
 Download the zip file from the green "Code" button above, or at Github https://github.com/JBreckeen/ExportToDir--Prism-Plugin/tree/main
 
-Copy the directory named "ExportToDir" to a Prism2 plugin directory.  Prism's default plugin directories are: *{installation path}\Plugins\Apps* and *{installation Path}\Plugins\Custom*.
+Copy the directory named "ExportToDir" to a directory of your choice, or a Prism2 plugin directory.  Prism's default plugin directories are: *{installation path}\Plugins\Apps* and *{installation Path}\Plugins\Custom*.  I perfer to have all my custom plugins in: *{drive}\ProgramData\Prism2\plugins\CustomPlugins\*
 
 You can add additional plugin search paths in Prism2 settings.  Go to Settings->Plugins and click the gear icon.  This opens a dialogue and you may add additional search paths at the bottom.
 
-I perfer this option so I have all my custom plugins in one sub directory where the other Prism plugins are: *{drive}\ProgramData\Prism2\plugins\CustomPlugins\
-
-
-### Install method
-
+I perfer this option so I have all my custom plugins in one sub directory where the other Prism plugins are: 
 
 
   
