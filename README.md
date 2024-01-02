@@ -29,7 +29,7 @@ Using the .zip checkbox will create an archive and copy the files using DEFLATE.
 
 This plugin is for Windows only, as Prism2 only supports Windows at this time.
 
-You can either download the latest release version from: https://github.com/AltaArts/ExportToDir--Prism-Plugin/releases/tag/v1.3
+You can either download the latest release version from: https://github.com/AltaArts/ExportToDir--Prism-Plugin/releases/latest
 
 Download the zip file from the green "Code" button above, or at Github https://github.com/JBreckeen/ExportToDir--Prism-Plugin/tree/main
 
