@@ -4,9 +4,11 @@ https://prism-pipeline.com/
 
 
 ### Installation -- copy method
-Download the zip file from Github https://github.com/JBreckeen/ExportToDir--Prism-Plugin/tree/main
+Download the zip file from the green "Code" button above, or at Github https://github.com/JBreckeen/ExportToDir--Prism-Plugin/tree/main
 
-Copy the directory named "ExportToDir" to a Prism2 plugin directory.  Prism defaults to {installation path}\Plugins\Apps and {installation Path}\Plugins\Custom.  You can add additional plugin search paths in Prism2 settings.  Go to Settings->Plugins and click the gear icon.  This opens a dialogue and you may add additional search paths at the bottom.
+Copy the directory named "ExportToDir" to a Prism2 plugin directory.  Prism's default plugin directories are: {installation path}\Plugins\Apps and {installation Path}\Plugins\Custom.
+
+You can add additional plugin search paths in Prism2 settings.  Go to Settings->Plugins and click the gear icon.  This opens a dialogue and you may add additional search paths at the bottom.
 
 I perfer this option so I have 
 
