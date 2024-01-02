@@ -40,3 +40,6 @@ You can add the additional plugin search paths in Prism2 settings.  Go to Settin
 Once added, you can either restart Prism2, or select the "Add existing plugin" (plus icon) and navigate to where you saved the ExportToDir folder.
 
 
+## **Issues / Suggestions**
+
+For any bug reports or suggestions, please add to the GitHub repo, or email josh@alta-arts.com
