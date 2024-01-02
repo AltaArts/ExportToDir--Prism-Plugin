@@ -14,7 +14,7 @@ ExportToDir adds a right-click item to Prism2's GUI that opens a dialogue to cus
 
 The ExportToDir plugin adds a menu tab in Prism2's user settings that allows the user to create template filenames, and custom directories used for the export.
 
-The template filenames can be configured separately for each export type (Scene file, Product, Media item, Library item) and are denoted with @@ and contain data such as "Project Name", "Shot Name", "Version" etc.  
+The template filenames can be configured separately for each export type (Scene file, Product, Media item, Library item) and are denoted with @@ and contain data such as "Project Name", "Shot Name", "Version" etc.  Tooltips in each template box show what data is available for each type.
 
 *example:*
 		@PROJECT@--@SEQUENCE@\_@SHOT@\_@TASK@\_@VERSION@@EXTENSION@
@@ -33,7 +33,7 @@ Copy the directory named "ExportToDir" to a directory of your choice, or a Prism
 
 Prism's default plugin directories are: *{installation path}\Plugins\Apps* and *{installation Path}\Plugins\Custom*.
 
-I perfer to have all my custom plugins in: *{drive}\ProgramData\Prism2\plugins\CustomPlugins\*
+I perfer to have all my custom plugins in: *{drive}\ProgramData\Prism2\plugins\CustomPlugins*
 
 You can add additional plugin search paths in Prism2 settings.  Go to Settings->Plugins and click the gear icon.  This opens a dialogue and you may add additional search paths at the bottom.
 
