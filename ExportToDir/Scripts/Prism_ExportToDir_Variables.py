@@ -29,6 +29,15 @@
 #
 # You should have received a copy of the GNU Lesser General Public License
 # along with Prism.  If not, see <https://www.gnu.org/licenses/>.
+####################################################
+#
+#           ExportToDir Plugin for Prism2
+#
+#                 Joshua Breckeen
+#                    Alta Arts
+#                josh@alta-arts.com
+#
+####################################################
 
 
 class Prism_ExportToDir_Variables(object):
