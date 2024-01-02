@@ -44,7 +44,7 @@ except:
 
 from PrismUtils.Decorators import err_catcher_plugin as err_catcher
 
-import os                                           #   CLEANUP     TODO
+import os
 import shutil
 import re
 import subprocess
@@ -75,12 +75,10 @@ class Prism_ExportToDir_Functions(object):
         self.outputPath = ""
 
         #   Global Settings File
-        global settingsFile
         pluginLocation = os.path.dirname(os.path.dirname(__file__))
-        settingsFile = os.path.join(pluginLocation, "ExportToDir_Config.json")
+        self.settingsFile = os.path.join(pluginLocation, "ExportToDir_Config.json")
 
-        #   Callbacks
-        #   TODO    Doesn't seem to be a callback for the Project Chooser
+        #   Callbacks                                           #   TODO    Doesn't seem to be a callback for the Project Chooser
         self.core.registerCallback("projectBrowserContextMenuRequested", self.projectBrowserContextMenuRequested, plugin=self)      
 
         self.core.registerCallback("openPBFileContextMenu", self.openPBFileContextMenu, plugin=self)   
@@ -106,7 +104,6 @@ class Prism_ExportToDir_Functions(object):
     @err_catcher(name=__name__)                                         #   TODO  There is no Callback for Project Browser RCL Menu
     def projectBrowserContextMenuRequested(self, origin, menu):
 
-
         pass
 
 
@@ -115,16 +112,31 @@ class Prism_ExportToDir_Functions(object):
     def openPBFileContextMenu(self, origin, rcmenu, filePath):
         self.menuContext = "Scene Files:"
         self.singleFileMode = True
+        fileData = None
 
         #   Retrieves File Info from Core
-        fileData = self.core.getScenefileData(filePath)
-        fileData["sourceDir"], fileData["sourceFilename"] = ntpath.split(fileData["filename"])
-        fileData["sourcePath"] = fileData["filename"]
+        try:
+            fileData = self.core.getScenefileData(filePath)
+            fileData["sourceDir"], fileData["sourceFilename"] = ntpath.split(fileData["filename"])
+            fileData["sourcePath"] = fileData["filename"]
+
+        except Exception as e:
+            msg = f"Error opening Config File {str(e)}"
+            self.core.popup(msg)
+
+
         #   Retrieves File Info from Project Config
-        pData = self.core.getConfig(config="project", dft=3)        
-        fileData["project_name"] = pData["globals"]["project_name"]
+        try:
+            pData = self.core.getConfig(config="project", dft=3)        
+            fileData["project_name"] = pData["globals"]["project_name"]
+        except Exception as e:
+            msg = f"Error opening Config File {str(e)}"
+            self.core.popup(msg)
+
+
         #   Sends File Info to get sorted
         self.loadCoreData(fileData)
+
         #   Adds Right Click Item
         if os.path.isfile(fileData["filename"]):
             sendToAct = QAction("Export to Dir...", rcmenu)
@@ -141,6 +153,7 @@ class Prism_ExportToDir_Functions(object):
 
         self.menuContext = "Product Files:"
         self.singleFileMode = True
+        fileData = None
 
         #   Gets Source Path from Last Column
         row = viewUi.rowAt(pos.y())
@@ -148,13 +161,17 @@ class Prism_ExportToDir_Functions(object):
         if row >= 0:
             sourcePath = viewUi.item(row, numCols - 1).text()
 
-        infoFolder = self.core.products.getVersionInfoPathFromProductFilepath(sourcePath)
-        infoPath = self.core.getVersioninfoPath(infoFolder)
-        fileData = self.core.getConfig(configPath=infoPath)
+        try:
+            infoFolder = self.core.products.getVersionInfoPathFromProductFilepath(sourcePath)
+            infoPath = self.core.getVersioninfoPath(infoFolder)
+            fileData = self.core.getConfig(configPath=infoPath)
 
-        fileData["sourcePath"] = sourcePath
-        fileData["sourceDir"], fileData["sourceFilename"] = ntpath.split(sourcePath)
-        fileData["extension"] = os.path.splitext(fileData["sourceFilename"])[1]
+            fileData["sourcePath"] = sourcePath
+            fileData["sourceDir"], fileData["sourceFilename"] = ntpath.split(sourcePath)
+            fileData["extension"] = os.path.splitext(fileData["sourceFilename"])[1]
+        except Exception as e:
+            msg = f"Error opening Config File {str(e)}"
+            self.core.popup(msg)
 
         #   Adds Right Click Item
         if os.path.exists(sourcePath):
@@ -178,19 +195,23 @@ class Prism_ExportToDir_Functions(object):
             return 
 
         self.menuContext = "Media Files:"
+        fileData = None
 
         if not origin.seq:
             return
-        
-        rawData = origin.getSelectedContexts()
 
-        if rawData and isinstance(rawData[0], dict):
-            fileData = rawData[0]
-        else:
-            fileData = {}
+        try:
+            rawData = origin.getSelectedContexts()
+            if rawData and isinstance(rawData[0], dict):
+                fileData = rawData[0]
+            else:
+                fileData = {}
 
-        fileData["sourceDir"] = fileData["path"]
-        fileData["extension"] = os.path.splitext(fileData["source"])[1]
+            fileData["sourceDir"] = fileData["path"]
+            fileData["extension"] = os.path.splitext(fileData["source"])[1]
+        except Exception as e:
+            msg = f"Error Getting File Context Info {str(e)}"
+            self.core.popup(msg)
 
         if len(origin.seq) < 2:
             self.singleFileMode = True
@@ -251,13 +272,17 @@ class Prism_ExportToDir_Functions(object):
 
         fileData = {}
 
-        pData = self.core.getConfig(config="project", dft=3)        
-        fileData["project_name"] = pData["globals"]["project_name"]
+        try:
+            pData = self.core.getConfig(config="project", dft=3)        
+            fileData["project_name"] = pData["globals"]["project_name"]
 
-        fileData["sourcePath"] = sourcePath
-        fileData["sourceDir"] = sourceDir
-        fileData["sourceFilename"] = sourceFilename
-        fileData["extension"] = sourceExt
+            fileData["sourcePath"] = sourcePath
+            fileData["sourceDir"] = sourceDir
+            fileData["sourceFilename"] = sourceFilename
+            fileData["extension"] = sourceExt
+        except Exception as e:
+            msg = f"Error opening Config File {str(e)}"
+            self.core.popup(msg)
 
         self.loadCoreData(fileData)        
             
@@ -393,16 +418,17 @@ class Prism_ExportToDir_Functions(object):
         b_removeoexportTo.clicked.connect(lambda: self.removeExportToDir(origin, self.tw_exportTo))
 
         # Populates lists from Settings File Data
-        self.e_naming_SceneFiles.setText(namingTemplateData.get("Scene Files:", ""))
-        self.e_naming_ProductFiles.setText(namingTemplateData.get("Product Files:", ""))
-        self.e_naming_MediaFiles.setText(namingTemplateData.get("Media Files:", ""))
-        self.e_naming_LibraryFiles.setText(namingTemplateData.get("Library Files:", ""))
-
-        for item in exportToList:
-            row_position = self.tw_exportTo.rowCount()
-            self.tw_exportTo.insertRow(row_position)
-            self.tw_exportTo.setItem(row_position, 0, QTableWidgetItem(item.get("Name", "")))
-            self.tw_exportTo.setItem(row_position, 1, QTableWidgetItem(item.get("Path", "")))
+        if namingTemplateData:
+            self.e_naming_SceneFiles.setText(namingTemplateData.get("Scene Files:", ""))
+            self.e_naming_ProductFiles.setText(namingTemplateData.get("Product Files:", ""))
+            self.e_naming_MediaFiles.setText(namingTemplateData.get("Media Files:", ""))
+            self.e_naming_LibraryFiles.setText(namingTemplateData.get("Library Files:", ""))
+        if exportToList:
+            for item in exportToList:
+                row_position = self.tw_exportTo.rowCount()
+                self.tw_exportTo.insertRow(row_position)
+                self.tw_exportTo.setItem(row_position, 0, QTableWidgetItem(item.get("Name", "")))
+                self.tw_exportTo.setItem(row_position, 1, QTableWidgetItem(item.get("Path", "")))
 
         # Add Tab to User Settings
         origin.addTab(origin.w_exportTo, "Export to Dir")
@@ -441,6 +467,9 @@ class Prism_ExportToDir_Functions(object):
 
         print("\n\n")                                               #   TESTING
         try:
+            if fileData == None:
+                self.core.popup("No File Data Found")
+
             print(f"fileData:  {fileData}")                         #   TESTING
 
             self.projectName = ""
@@ -501,10 +530,9 @@ class Prism_ExportToDir_Functions(object):
             if "extension" in fileData:
                 self.sourceExt = fileData["extension"]
 
-
-
-        except:
-            print("Cannot show Data")                       #   TESTING
+        except Exception as e:
+            msg = f"Error opening Config File {str(e)}"
+            self.core.popup(msg)
 ############  vvvvvvvvvvvvvvvvvvvvvvvvvvvv   ################################
 
         print("\n\n")                           #   TESTING
@@ -539,7 +567,7 @@ class Prism_ExportToDir_Functions(object):
     @err_catcher(name=__name__)
     def loadSettings(self, context=None):
         try:
-            with open(settingsFile, "r") as json_file:
+            with open(self.settingsFile, "r") as json_file:
                 data = json.load(json_file)
 
                 namingTemplate = data.get("NamingTemplate", {})
@@ -552,7 +580,11 @@ class Prism_ExportToDir_Functions(object):
                     return template
 
         except FileNotFoundError:
-            return {}, []
+        # Create the settings file if it doesn't exist
+            with open(self.settingsFile, "w") as json_file:
+                json.dump({}, json_file)
+            # Return an empty dictionary
+            return None, None
 
 
     #   Saves Settings to Global Settings File
@@ -586,7 +618,7 @@ class Prism_ExportToDir_Functions(object):
                 exportPathsData.append({"Name": name, "Path": location})
 
         # Save both dictionaries
-        with open(settingsFile, "w") as json_file:
+        with open(self.settingsFile, "w") as json_file:
             json.dump({"NamingTemplate": namingTemplateData, "ExportPaths": exportPathsData}, json_file, indent=4)
 
 
@@ -744,8 +776,6 @@ class Prism_ExportToDir_Functions(object):
         formattedNameNoExt = self.formatName(fileNameNoExt)
         formattedName = formattedNameNoExt + self.sourceExt
 
-        template = self.loadSettings(context=self.menuContext)
-
         replacements = {
             "@PROJECT@": self.projectName,
             "@USER@": self.userName,
@@ -766,10 +796,15 @@ class Prism_ExportToDir_Functions(object):
             "@EXTENSION@": self.sourceExt
         }
 
-        # Perform replacements
-        placeholderName = template  # Initialize with the original template
-        for placeholder, value in replacements.items():
-            placeholderName = placeholderName.replace(placeholder, value)
+        # Perform replacements            
+        template = self.loadSettings(context=self.menuContext)
+       
+        if template:    #   Check if template loaded from Settings File
+            placeholderName = template  # Initialize with the original template
+            for placeholder, value in replacements.items():
+                placeholderName = placeholderName.replace(placeholder, value)
+        else:
+            placeholderName = formattedName     #   Fallback name
 
         dlg.e_mediaName.setText(placeholderName)
 
@@ -813,9 +848,11 @@ class Prism_ExportToDir_Functions(object):
     @err_catcher(name=__name__)                                     #   TODO RENAMING SEQ's
     def refreshOutputName(self, dlg):
 
+        #   Get name form UI
         placeholderName = dlg.e_mediaName.text()
         root, extension = os.path.splitext(placeholderName)
 
+        #   Cehck if name in UI has an extension
         if extension:
             fileNameNoExt = root
         else:
@@ -823,6 +860,7 @@ class Prism_ExportToDir_Functions(object):
         
         formatedName = self.formatName(fileNameNoExt)
         
+        #   Change extension to .zip if checked
         if dlg.chb_zipFile.isChecked():
             if not self.singleFileMode:
                 formatedName = formatedName.rstrip('#_.')
@@ -830,12 +868,13 @@ class Prism_ExportToDir_Functions(object):
         else:
             formatedName = fileNameNoExt + self.sourceExt
 
+        #   User selected output folder type
         if dlg.rb_ProjectFolder.isChecked():
             outputPath = dlg.cb_mediaFolders.currentText()
-
         elif dlg.rb_customFolder.isChecked():
             outputPath = dlg.e_customLoc.text()
 
+        #   Adds append folder if needed
         if dlg.e_appendFolder.text():
             appendFolder = dlg.e_appendFolder.text()
 
@@ -856,18 +895,20 @@ class Prism_ExportToDir_Functions(object):
     @err_catcher(name=__name__)
     def openExplorer(self, dlg, path, set=False):
  
+        #   Sets location to open Dialogue to        
         if dlg.rb_ProjectFolder.isChecked():
             path = dlg.cb_mediaFolders.currentText()
-
         elif dlg.rb_customFolder.isChecked():
             path = dlg.e_customLoc.text()
   
         path = path.replace("/", "\\")
 
+        #   If set True then opens selectable Dialogue
         if set == True:
             customDir = QFileDialog.getExistingDirectory(None, "Select Save Directory", path)
             customDir = customDir.replace("/", "\\")
             dlg.e_customLoc.setText(customDir)
+        #   If set not True, then just opens file explorer
         else:
             cmd = "explorer " + path
             subprocess.Popen(cmd)
@@ -878,6 +919,7 @@ class Prism_ExportToDir_Functions(object):
     @err_catcher(name=__name__)
     def resetProgBar(self, dlg):
 
+        #   Resets Prog Bar status and color
         dlg.l_status.setText("Idle...")
         dlg.progressBar.reset()
         dlg.progressBar.setStyleSheet(PROG_BLUE)
@@ -888,6 +930,7 @@ class Prism_ExportToDir_Functions(object):
 
         self.resetProgBar(dlg)
 
+        #   Retrieves Name from UI
         outputName = dlg.e_mediaName.text()
         fileName, extension = os.path.splitext(outputName)
 
@@ -897,6 +940,7 @@ class Prism_ExportToDir_Functions(object):
 
         outputPath = dlg.e_outputName.text()
 
+        #   Changes output to .zip if needed
         zipFiles = dlg.chb_zipFile.isChecked()
         if zipFiles:
             outputPath = os.path.splitext(outputPath)[0] + '.zip'
@@ -911,10 +955,12 @@ class Prism_ExportToDir_Functions(object):
             else:
                 sourcePath = self.sourcePath
 
+            #   Checks if file already exists and then opens Dialogue
             if os.path.exists(outputPath):
                 if self.executePopUp(dlg, "File", outputPath) == False:
                     return
-                
+
+            #   Makes Dir if it doesn't exist    
             outputDir = os.path.dirname(outputPath)
             if not os.path.exists(outputDir):
                 os.mkdir(outputDir)
@@ -927,11 +973,12 @@ class Prism_ExportToDir_Functions(object):
             sourceDir = os.path.dirname(self.sourcePath[0])
             outputDir = os.path.dirname(outputPath)
 
+            #   Checks if Dir exists and then opens Dialogue
             if os.path.exists(outputDir):
                 if self.executePopUp(dlg, "Directory", outputDir) == False:
                     return
                 
-            if not os.path.exists(outputDir):
+            else:   #   Makes Dir if it doesn't exist
                 os.mkdir(outputDir)
                 
             copyThread = CopyThread(dlg, 2, sourceDir, outputDir, zipFiles, core=self.core)
@@ -941,10 +988,12 @@ class Prism_ExportToDir_Functions(object):
             sourceDir = os.path.dirname(self.sourcePath[0])
             outputDir = os.path.dirname(outputPath)
 
+            #   Checks if file already exists and then opens Dialogue
             if os.path.exists(outputPath):
                 if self.executePopUp(dlg, "File", outputPath) == False:
                     return
                 
+            #   Makes Dir if it doesn't exist    
             if not os.path.exists(outputDir):
                 os.mkdir(outputDir)
                 
@@ -992,21 +1041,23 @@ class CopyThread(QObject):
             #   Single File
             if self.case == 1:
                 if self.zipFiles:
-
+                    #   Changes extension to .zip if needed
                     filename = os.path.basename(originalPath)
                     zipFilename = os.path.splitext(filename)[0] + '.zip'
 
+                    #   Zips file in tempDir made in the method
                     zipPath = self.executeZip(originalPath, zipFilename)
-
+                    #   Copies to the file with progress
                     self.dlg.l_status.setText("Copying...")
                     self.copyFile(zipPath, self.outputPath)
-
+                    #   Sets Prog Bar to finished
                     self.progressUpdated.emit(100)
                     self.dlg.l_status.setText("Complete.")
                     self.dlg.progressBar.setStyleSheet(PROG_GREEN)
 
                 else:
                     outputPathWithExt = self.outputPath
+                    #   Copies to the file with progress
                     self.dlg.l_status.setText("Copying...")
                     self.copyFile(originalPath, outputPathWithExt)
                     self.progressUpdated.emit(100)
@@ -1019,11 +1070,14 @@ class CopyThread(QObject):
 
             #   Directory with Zip
             elif self.case ==3:
+                #   Changes extension to .zip
                 zipFilename = f"{os.path.basename(self.outputPath)}.zip"
+                #   Zips file in tempDir made in the method
                 zipPath = self.executeZip(originalPath, zipFilename)
-
+                #   Copies to the file with progress
                 self.copyFile(zipPath, self.outputPath)
 
+            #   Removes tempDir
             if self.tempDir:
                 shutil.rmtree(self.tempDir)
 
@@ -1042,8 +1096,10 @@ class CopyThread(QObject):
                 self.progressUpdated.emit(0)
                 self.dlg.l_status.setText("Copying...")
 
+            #   Gets size of file
             totalSize = os.path.getsize(src)
             copiedSize = 0
+            #   Copies and tracks the progress
             with open(src, 'rb') as srcFile, open(dest, 'wb') as destFile:
                 while True:
                     chunk = srcFile.read(4096)
@@ -1068,6 +1124,7 @@ class CopyThread(QObject):
 
     @err_catcher(name=__name__)
     def dirFileAmount(self, dirPath):
+        #   Gets number of files in directory
         try:
             if os.path.isdir(dirPath):
                 entries = os.listdir(dirPath)
@@ -1084,15 +1141,17 @@ class CopyThread(QObject):
     def copyDirectory(self, src, dest):
         try:
             self.dlg.l_status.setText("Copying...")
-
+            #   Gets number of files in directory
             totalFiles = self.dirFileAmount(src)
             copiedFiles = 0
+            #   Copies all files in dir with progress
             for root, _, files in os.walk(src):
                 for file in files:
                     srcFile = os.path.join(root, file)
                     # Ensure it's a file and not in a subdirectory
                     if os.path.isfile(srcFile) and os.path.dirname(srcFile) == src:
                         destFile = os.path.join(dest, os.path.relpath(srcFile, src))
+                        #   Calls copyFile for each file, but disables prog for each file
                         self.copyFile(srcFile, destFile, showProg=False)
                         copiedFiles += 1
                         progressPercentage = int(copiedFiles / totalFiles * 100)
@@ -1111,10 +1170,10 @@ class CopyThread(QObject):
 
     @err_catcher(name=__name__)
     def executeZip(self, originalPath, zipFilename):                        #   TODO  RENAME FILES
-
+        #   Get number of files in directory
         totalFiles = self.dirFileAmount(originalPath)
         zippedFiles = 0
-
+        #   Makes tempDir
         self.tempDir = tempfile.mkdtemp(prefix="PrismTemp_")
         zipPath = os.path.join(self.tempDir, zipFilename)
 
@@ -1152,10 +1211,6 @@ class CopyThread(QObject):
             self.progressUpdated.emit(100)
             self.dlg.progressBar.setStyleSheet(PROG_RED)
             self.core.popup(e)  # TESTING
-
-
-########    TODO    ERRORS
-    
 
 
 class AddExportToDirDialog(QDialog):
