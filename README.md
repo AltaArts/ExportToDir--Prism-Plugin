@@ -33,10 +33,10 @@ Copy the directory named "ExportToDir" to a directory of your choice, or a Prism
 
 Prism's default plugin directories are: *{installation path}\Plugins\Apps* and *{installation Path}\Plugins\Custom*.
 
-I perfer to have all my custom plugins in: *{drive}\ProgramData\Prism2\plugins\CustomPlugins*
+I prefer to have all my custom plugins in: *{drive}\ProgramData\Prism2\plugins\CustomPlugins*
 
 You can add additional plugin search paths in Prism2 settings.  Go to Settings->Plugins and click the gear icon.  This opens a dialogue and you may add additional search paths at the bottom.
 
-Once added, you can either restart Prism2, or select the "Add existing plugin" (plus icon) to enable ExportToDir.
+Once added, you can either restart Prism2, or select the "Add existing plugin" (plus icon) and navigate to where you saved the ExportToDir folder.
 
 
