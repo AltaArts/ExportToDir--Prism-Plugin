@@ -726,6 +726,28 @@ class Prism_ExportToDir_Functions(object):
         self.setPlaceholderName(dlg, load=True)
         self.setSequenceMode(dlg)
 
+        #   Tooltips for Dialogue
+        tip = "Filename for export.  Template used to create default can be madified in User Settings"
+        dlg.e_mediaName.setToolTip(tip)
+        tip = "Click to revert to template filename"
+        dlg.but_nameReset.setToolTip(tip)
+        tip = "Export single image from sequence"
+        dlg.rb_singleImage.setToolTip(tip)
+        tip = "Export complete image sequence"
+        dlg.rb_imageSeq.setToolTip(tip)    
+        tip = "Directories listed in Project Settings->Locations"
+        dlg.l_radioProjectFolder.setToolTip(tip)   
+        tip = "Directories listed in User Settings->ExportToDir"
+        dlg.l_radioCustomFolder.setToolTip(tip)  
+        tip = "Sub directory under directory selected above"
+        dlg.e_appendFolder.setToolTip(tip)          
+        tip = "Select to .zip the export contents to a single file"
+        dlg.chb_zipFile.setToolTip(tip)  
+        tip = "Final output path of export"
+        dlg.e_outputName.setToolTip(tip)  
+        tip = "Open export directory"
+        dlg.but_explorer.setToolTip(tip)  
+
         #   Connections
         dlg.e_mediaName.textEdited.connect(lambda: self.refreshOutputName(dlg))
         dlg.but_nameReset.clicked.connect(lambda: self.setPlaceholderName(dlg, load=True))
