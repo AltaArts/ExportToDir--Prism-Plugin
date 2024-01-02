@@ -42,4 +42,4 @@ Once added, you can either restart Prism2, or select the "Add existing plugin" (
 
 ## **Issues / Suggestions**
 
-For any bug reports or suggestions, please add to the GitHub repo, or email josh@alta-arts.com
+For any bug reports or suggestions, please add to the GitHub repo.
