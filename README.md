@@ -29,9 +29,9 @@ Using the .zip checkbox will create an archive and copy the files using DEFLATE.
 
 This plugin is for Windows only, as Prism2 only supports Windows at this time.
 
-You can either download the latest release version from: [Latest Release](https://github.com/AltaArts/ExportToDir--Prism-Plugin/releases/latest)
+You can either download the latest stable release version from: [Latest Release](https://github.com/AltaArts/ExportToDir--Prism-Plugin/releases/latest)
 
-or download the zip file from the green "Code" button above and at Github https://github.com/JBreckeen/ExportToDir--Prism-Plugin/tree/main
+or download the current code zip file from the green "Code" button above or on [Github](https://github.com/JBreckeen/ExportToDir--Prism-Plugin/tree/main)
 
 Copy the directory named "ExportToDir" to a directory of your choice, or a Prism2 plugin directory.
 
