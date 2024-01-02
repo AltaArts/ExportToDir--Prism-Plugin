@@ -12,13 +12,19 @@ Copy the directory named "ExportToDir" to a Prism2 plugin directory.  Prism's de
 
 You can add additional plugin search paths in Prism2 settings.  Go to Settings->Plugins and click the gear icon.  This opens a dialogue and you may add additional search paths at the bottom.
 
-I perfer this option so I have 
+I perfer this option so I have all my custom plugins in one sub directory where the other Prism plugins are: *{drive}\ProgramData\Prism2\plugins\CustomPlugins\
 
-Also please ensure the segment-anything you created with `git clone` is in the PYTHONPATH. For example, if segment-anything folder is /home/user/programs/segment-anything, then your PYTHONPATH should have /home/user/programs/segment-anything included in it. You can change the .profile on linux or the corresponding file on Windows so that this is available everytime you open GIMP.
 
 ### Install method
 
 
-## **Plugin Usag**e
+## **Plugin Usage**
+ExportToDir adds a right-click item to Prism2's GUI that opens a dialogue to customize an export file name, directory, and allow the file(s) to be zipped.  Using ExportToDir does not alter the original files at all.
+
+The ExportToDir plugin adds a menu tab in Prism2's user settings that allows the user to create template filenames, and custom directoies used for the export.
+
+The template filenames can be configured seperatly for each export type (Scene file, Product, Media item, Library item) and are denoted with @@ and contain data such as "Project Name", "Shot Name", "Version" etc.  When the dialogue is show, the template items will be replaced with the actual data if it exists.  The filename in the dialogue can always be edited
+
+Directories added to the ExportToDir menu will be available for all projects.  An example is if you have a client share setup and want to quickly drop in a file that will be synced to the cloud.  These directories will be in the dropdown of the dialogue, along with any directories listed in Project Settings -> Locations.  The dialogue also allow for a custom output directory to be selected.
 
   
