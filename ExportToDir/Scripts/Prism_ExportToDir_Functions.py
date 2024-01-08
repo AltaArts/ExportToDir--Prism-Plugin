@@ -163,13 +163,14 @@ class Prism_ExportToDir_Functions(object):
         self.singleFileMode = True
         fileData = None
 
-        #   Gets Source Path from Last Column
-        row = viewUi.rowAt(pos.y())
-        numCols = viewUi.columnCount()
-        if row >= 0:
-            sourcePath = viewUi.item(row, numCols - 1).text()
-
         try:
+            #   Gets Source Path from Last Column
+            row = viewUi.rowAt(pos.y())
+            numCols = viewUi.columnCount()
+            if row >= 0:
+                sourcePath = viewUi.item(row, numCols - 1).text()
+
+            #   Retrieves File Info        
             infoFolder = self.core.products.getVersionInfoPathFromProductFilepath(sourcePath)
             infoPath = self.core.getVersioninfoPath(infoFolder)
             fileData = self.core.getConfig(configPath=infoPath)
@@ -177,19 +178,19 @@ class Prism_ExportToDir_Functions(object):
             fileData["sourcePath"] = sourcePath
             fileData["sourceDir"], fileData["sourceFilename"] = ntpath.split(sourcePath)
             fileData["extension"] = os.path.splitext(fileData["sourceFilename"])[1]
-        except Exception as e:
-            msg = f"Error opening Config File {str(e)}"
-            self.core.popup(msg)
 
-        #   Adds Right Click Item
-        if os.path.exists(sourcePath):
-            sendToAct = QAction("Export to Dir...", viewUi)
-            sendToAct.triggered.connect(lambda: self.sendToDialogue())
-            rcmenu.addAction(sendToAct)
+            #   Adds Right Click Item
+            if os.path.exists(sourcePath):
+                sendToAct = QAction("Export to Dir...", viewUi)
+                sendToAct.triggered.connect(lambda: self.sendToDialogue())
+                rcmenu.addAction(sendToAct)
 
-        #   Sends File Info to get sorted
-        self.loadCoreData(fileData)
+            #   Sends File Info to get sorted
+            self.loadCoreData(fileData)
 
+        except:
+            return
+        
 
     #   Called with Callback - Media Browser
     @err_catcher(name=__name__)
