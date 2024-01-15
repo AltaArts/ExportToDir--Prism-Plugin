@@ -132,7 +132,6 @@ class Prism_ExportToDir_Functions(object):
             msg = f"Error opening Config File {str(e)}"
             self.core.popup(msg)
 
-
         #   Retrieves File Info from Project Config
         try:
             pData = self.core.getConfig(config="project", dft=3)        
@@ -141,15 +140,14 @@ class Prism_ExportToDir_Functions(object):
             msg = f"Error opening Config File {str(e)}"
             self.core.popup(msg)
 
-
         #   Sends File Info to get sorted
         self.loadCoreData(fileData)
 
         #   Adds Right Click Item
         if os.path.isfile(fileData["filename"]):
-            sendToAct = QAction("Export to Dir...", rcmenu)
-            sendToAct.triggered.connect(lambda: self.sendToDialogue())
-            rcmenu.addAction(sendToAct)
+            exportToAct = QAction("Export to Dir...", rcmenu)
+            exportToAct.triggered.connect(lambda: self.exportToDialogue())
+            rcmenu.addAction(exportToAct)
 
 
     #   Called with Callback - Product Browser
@@ -181,9 +179,9 @@ class Prism_ExportToDir_Functions(object):
 
             #   Adds Right Click Item
             if os.path.exists(sourcePath):
-                sendToAct = QAction("Export to Dir...", viewUi)
-                sendToAct.triggered.connect(lambda: self.sendToDialogue())
-                rcmenu.addAction(sendToAct)
+                exportToAct = QAction("Export to Dir...", viewUi)
+                exportToAct.triggered.connect(lambda: self.exportToDialogue())
+                rcmenu.addAction(exportToAct)
 
             #   Sends File Info to get sorted
             self.loadCoreData(fileData)
@@ -241,9 +239,9 @@ class Prism_ExportToDir_Functions(object):
 
         self.loadCoreData(fileData)
 
-        sendToAct = QAction("Export to Dir...", self.core.pb.mediaBrowser)
-        sendToAct.triggered.connect(lambda: self.sendToDialogue())
-        menu.addAction(sendToAct)
+        exportToAct = QAction("Export to Dir...", self.core.pb.mediaBrowser)
+        exportToAct.triggered.connect(lambda: self.exportToDialogue())
+        menu.addAction(exportToAct)
 
 
     #   Called with Callback - Library Browser
@@ -296,9 +294,9 @@ class Prism_ExportToDir_Functions(object):
         self.loadCoreData(fileData)        
             
         if os.path.isfile(fileData["sourcePath"]):
-            sendToAct = QAction("Export to Dir...", self.core.pb.mediaBrowser)
-            sendToAct.triggered.connect(lambda: self.sendToDialogue())
-            menu.addAction(sendToAct)
+            exportToAct = QAction("Export to Dir...", self.core.pb.mediaBrowser)
+            exportToAct.triggered.connect(lambda: self.exportToDialogue())
+            menu.addAction(exportToAct)
 
 
     #   Called with Callback
@@ -388,7 +386,7 @@ class Prism_ExportToDir_Functions(object):
         origin.lo_exportTo.addItem(spacer)
 
         # Add the "Export to Dir" group box
-        gb_exportTo = QGroupBox("User Export to Dir Locations                   (will be available in ExportToDir in addition to Project Locations)")
+        gb_exportTo = QGroupBox("User Export to Dir Locations")
         lo_exportTo = QVBoxLayout()
         gb_exportTo.setLayout(lo_exportTo)
 
@@ -402,11 +400,23 @@ class Prism_ExportToDir_Functions(object):
         # Sets initial Table size
         self.tw_exportTo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
+        tip = ("Directoies that will be available in ExportToDir in addition to Project Locations.\n\n"
+               "Name will be displayed in the right-click menu."
+                )
+        self.tw_exportTo.setToolTip(tip)
+
         # Adds Buttons
         w_exportTo = QWidget()
         lo_exportToButtons = QHBoxLayout()
         b_addoexportTo = QPushButton("Add")
+        tip = "Adds directory to ExportToDir list dropdown."
+        b_addoexportTo.setToolTip(tip)
+
         b_removeoexportTo = QPushButton("Remove")
+        tip = ("Removes directory from ExportToDir list dropdown.\n\n"
+               "Will not delete any files in the directory."
+                )
+        b_removeoexportTo.setToolTip(tip)
 
         w_exportTo.setLayout(lo_exportToButtons)
         lo_exportToButtons.addStretch()
@@ -708,7 +718,7 @@ class Prism_ExportToDir_Functions(object):
 
 
     @err_catcher(name=__name__)
-    def sendToDialogue(self):
+    def exportToDialogue(self):
 
         dlg = ExportToDir()
         dlg.setWindowTitle("Export to Directory")
@@ -1253,9 +1263,15 @@ class AddExportToDirDialog(QDialog):
 
         self.l_name = QLabel("Short Name:")
         self.le_name = QLineEdit()
+        tip = "Name displayed in right-click menu."
+        self.l_name.setToolTip(tip)
+        self.le_name.setToolTip(tip)
 
         self.l_location = QLabel("Location:")
         self.but_location = QPushButton("Select Location")
+        tip = "Opens dialogue to select path to directory."
+        self.l_location.setToolTip(tip)
+        self.but_location.setToolTip(tip)
         self.but_location.clicked.connect(lambda: self.selectLocation(self))
 
         self.but_ok = QPushButton("OK")
