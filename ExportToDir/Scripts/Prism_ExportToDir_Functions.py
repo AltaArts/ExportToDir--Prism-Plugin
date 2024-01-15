@@ -738,7 +738,7 @@ class Prism_ExportToDir_Functions(object):
         self.setSequenceMode(dlg)
 
         #   Tooltips for Dialogue
-        tip = "Filename for export.  Template used to create default can be madified in User Settings"
+        tip = "Filename for export.  Template used to create default can be modified in User Settings"
         dlg.e_mediaName.setToolTip(tip)
         tip = "Click to revert to template filename"
         dlg.but_nameReset.setToolTip(tip)
