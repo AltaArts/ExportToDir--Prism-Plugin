@@ -400,8 +400,8 @@ class Prism_ExportToDir_Functions(object):
         # Sets initial Table size
         self.tw_exportTo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        tip = ("Directoies that will be available in ExportToDir in addition to Project Locations.\n\n"
-               "Name will be displayed in the right-click menu."
+        tip = ("Directories that will be available in ExportToDir in addition to Project Locations.\n\n"
+               "Short Name will be displayed in the right-click menu."
                 )
         self.tw_exportTo.setToolTip(tip)
 
