@@ -87,7 +87,7 @@ class Prism_ExportToDir_Functions(object):
         self.settingsFile = os.path.join(pluginLocation, "ExportToDir_Config.json")
 
         #   Callbacks                                           #   TODO    Doesn't seem to be a callback for the Project Chooser
-        self.core.registerCallback("projectBrowserContextMenuRequested", self.projectBrowserContextMenuRequested, plugin=self)      
+        # self.core.registerCallback("projectBrowserContextMenuRequested", self.projectBrowserContextMenuRequested, plugin=self)      
 
         self.core.registerCallback("openPBFileContextMenu", self.openPBFileContextMenu, plugin=self)   
         self.core.registerCallback("productSelectorContextMenuRequested", self.productSelectorContextMenuRequested, plugin=self)        
@@ -107,12 +107,13 @@ class Prism_ExportToDir_Functions(object):
     def onUserSettingsSave(self, origin):
 
         self.saveSettings()
+        
 
-    #   Called with Callback - Project Browser
-    @err_catcher(name=__name__)                                         #   TODO  There is no Callback for Project Browser RCL Menu
-    def projectBrowserContextMenuRequested(self, origin, menu):
+    # #   Called with Callback - Project Browser
+    # @err_catcher(name=__name__)                                         #   TODO  There is no Callback for Project Browser RCL Menu
+    # def projectBrowserContextMenuRequested(self, origin, menu):
 
-        pass
+    #     pass
 
 
     #   Called with Callback - SceneFiles Browser
