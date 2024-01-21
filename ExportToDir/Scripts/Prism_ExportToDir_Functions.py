@@ -61,6 +61,9 @@ import zipfile
 import tempfile
 import json
 import ntpath
+import logging
+
+logger = logging.getLogger(__name__)
 
 from ExportToDir import ExportToDir
 
@@ -109,12 +112,14 @@ class Prism_ExportToDir_Functions(object):
         self.saveSettings()
         
 
+########################
     # #   Called with Callback - Project Browser
     # @err_catcher(name=__name__)                                         #   TODO  There is no Callback for Project Browser RCL Menu
     # def projectBrowserContextMenuRequested(self, origin, menu):
 
     #     pass
-
+#########################
+        
 
     #   Called with Callback - SceneFiles Browser
     @err_catcher(name=__name__)
@@ -125,6 +130,7 @@ class Prism_ExportToDir_Functions(object):
 
         #   Retrieves File Info from Core
         try:
+            logger.debug("Loading Scene Data")
             fileData = self.core.getScenefileData(filePath)
             fileData["sourceDir"], fileData["sourceFilename"] = ntpath.split(fileData["filename"])
             fileData["sourcePath"] = fileData["filename"]
@@ -132,14 +138,18 @@ class Prism_ExportToDir_Functions(object):
         except Exception as e:
             msg = f"Error opening Config File {str(e)}"
             self.core.popup(msg)
+            logger.warning(f"ERROR: Cannot load Scene Data: {msg}")
 
         #   Retrieves File Info from Project Config
         try:
+            logger.debug("Loading Project Data")
             pData = self.core.getConfig(config="project", dft=3)        
             fileData["project_name"] = pData["globals"]["project_name"]
+
         except Exception as e:
             msg = f"Error opening Config File {str(e)}"
             self.core.popup(msg)
+            logger.warning(f"ERROR: Cannot load Project Data: {msg}")
 
         #   Sends File Info to get sorted
         self.loadCoreData(fileData)
@@ -163,6 +173,7 @@ class Prism_ExportToDir_Functions(object):
         fileData = None
 
         try:
+            logger.debug("Loading Product Data")
             #   Gets Source Path from Last Column
             row = viewUi.rowAt(pos.y())
             numCols = viewUi.columnCount()
@@ -178,17 +189,20 @@ class Prism_ExportToDir_Functions(object):
             fileData["sourceDir"], fileData["sourceFilename"] = ntpath.split(sourcePath)
             fileData["extension"] = os.path.splitext(fileData["sourceFilename"])[1]
 
-            #   Adds Right Click Item
-            if os.path.exists(sourcePath):
-                exportToAct = QAction("Export to Dir...", viewUi)
-                exportToAct.triggered.connect(lambda: self.exportToDialogue())
-                rcmenu.addAction(exportToAct)
-
-            #   Sends File Info to get sorted
-            self.loadCoreData(fileData)
-
-        except:
+        except Exception as e:
+            msg = f"Error opening Config File {str(e)}"
+            self.core.popup(msg)
+            logger.warning(f"ERROR: Failed to Load Product Data: {msg}")
             return
+        
+        #   Sends File Info to get sorted
+        self.loadCoreData(fileData)
+
+        #   Adds Right Click Item
+        if os.path.exists(sourcePath):
+            exportToAct = QAction("Export to Dir...", viewUi)
+            exportToAct.triggered.connect(lambda: self.exportToDialogue())
+            rcmenu.addAction(exportToAct)
         
 
     #   Called with Callback - Media Browser
@@ -209,6 +223,7 @@ class Prism_ExportToDir_Functions(object):
             return
 
         try:
+            logger.debug("Loading Media Data")
             rawData = origin.getSelectedContexts()
             if rawData and isinstance(rawData[0], dict):
                 fileData = rawData[0]
@@ -220,6 +235,7 @@ class Prism_ExportToDir_Functions(object):
         except Exception as e:
             msg = f"Error Getting File Context Info {str(e)}"
             self.core.popup(msg)
+            logger.warning(f"ERROR: Cannot Load Media Data: {e}")
 
         if len(origin.seq) < 2:
             self.singleFileMode = True
@@ -272,15 +288,17 @@ class Prism_ExportToDir_Functions(object):
         # print(f"getScenefileData:  {self.core.getScenefileData(filepath)}")
         # print("\nEND\n")
 
-
-        sourcePath = origin.path
-        sourceDir = os.path.dirname(sourcePath)
-        sourceBasename = os.path.basename(sourcePath)
-        sourceFilename, sourceExt = os.path.splitext(sourceBasename)
-
-        fileData = {}
+        logger.debug("Loading Library Data")
 
         try:
+
+            sourcePath = origin.path
+            sourceDir = os.path.dirname(sourcePath)
+            sourceBasename = os.path.basename(sourcePath)
+            sourceFilename, sourceExt = os.path.splitext(sourceBasename)
+
+            fileData = {}
+
             pData = self.core.getConfig(config="project", dft=3)        
             fileData["project_name"] = pData["globals"]["project_name"]
 
@@ -288,9 +306,11 @@ class Prism_ExportToDir_Functions(object):
             fileData["sourceDir"] = sourceDir
             fileData["sourceFilename"] = sourceFilename
             fileData["extension"] = sourceExt
+
         except Exception as e:
             msg = f"Error opening Config File {str(e)}"
             self.core.popup(msg)
+            logger.warning(f"ERROR: {msg}")
 
         self.loadCoreData(fileData)        
             
@@ -303,6 +323,8 @@ class Prism_ExportToDir_Functions(object):
     #   Called with Callback
     @err_catcher(name=__name__)                                                         #   TODO MAKE ERROR CEHCKING
     def userSettings_loadUI(self, origin):  # ADDING "Export to Dir" TO SETTINGS
+
+        logger.debug("Loading ExportToDir Menu")
 
         # Loads Settings File
         namingTemplateData, exportToList = self.loadSettings()
@@ -462,6 +484,8 @@ class Prism_ExportToDir_Functions(object):
         for key, value in template.items():
             if textbox in value:
                 templateItems += key + "\n"
+        
+        logger.debug("Loading Template Items")
 
         return templateItems
 
@@ -480,17 +504,19 @@ class Prism_ExportToDir_Functions(object):
             if pluginName is not None:
                 self.loadedPlugins.append(plugin)
 
+        logger.debug("Getting Loaded Plugins")
+
 
     #   Receives File Data and Populates Variables
     @err_catcher(name=__name__)
     def loadCoreData(self, fileData):
 
-        print("\n\n")                                               #   TESTING
+        # print("\n\n")                                               #   TESTING
         try:
             if fileData == None:
                 self.core.popup("No File Data Found")
 
-            print(f"fileData:  {fileData}")                         #   TESTING
+            # print(f"fileData:  {fileData}")                         #   TESTING
 
             self.projectName = ""
             self.userName = ""
@@ -555,37 +581,39 @@ class Prism_ExportToDir_Functions(object):
             self.core.popup(msg)
 ############  vvvvvvvvvvvvvvvvvvvvvvvvvvvv   ################################
 
-        print("\n\n")                           #   TESTING
+        # print("\n\n")                           #   TESTING
               
-        attributes = ["projectName",
-                      "userName",
-                      "entityType",
-                      "sequenceName",
-                      "shotName",
-                      "assetName",
-                      "deptName",
-                      "taskName",
-                      "productName",
-                      "identifier",
-                      "version",
-                      "aov",
-                      "channel",
-                      "sourcePath",
-                      "sourceDir",
-                      "sourceFilename",
-                      "currentFrame",
-                      "fameNumber",
-                      "sourceExt"]
+        # attributes = ["projectName",
+        #               "userName",
+        #               "entityType",
+        #               "sequenceName",
+        #               "shotName",
+        #               "assetName",
+        #               "deptName",
+        #               "taskName",
+        #               "productName",
+        #               "identifier",
+        #               "version",
+        #               "aov",
+        #               "channel",
+        #               "sourcePath",
+        #               "sourceDir",
+        #               "sourceFilename",
+        #               "currentFrame",
+        #               "fameNumber",
+        #               "sourceExt"]
 
-        for attribute in attributes:
-            if hasattr(self, attribute):
-                value = getattr(self, attribute)
-                print(f"{attribute}: {value}")
+        # for attribute in attributes:
+        #     if hasattr(self, attribute):
+        #         value = getattr(self, attribute)
+        #         print(f"{attribute}: {value}")
 ############  ^^^^^^^^^^^^^^^^^^^^^^^^^^    ##############################
 
     #   Load Settings from Global Settings File
     @err_catcher(name=__name__)
     def loadSettings(self, context=None):
+        logger.debug("Loading Settings")
+
         try:
             with open(self.settingsFile, "r") as json_file:
                 data = json.load(json_file)
@@ -600,7 +628,8 @@ class Prism_ExportToDir_Functions(object):
                     return template
 
         except FileNotFoundError:
-        # Create the settings file if it doesn't exist
+            logger.debug("Setting do not exist.  Creating new Settings Files.")
+            # Create the settings file if it doesn't exist
             with open(self.settingsFile, "w") as json_file:
                 json.dump({}, json_file)
             # Return an empty dictionary
@@ -641,6 +670,8 @@ class Prism_ExportToDir_Functions(object):
         with open(self.settingsFile, "w") as json_file:
             json.dump({"NamingTemplate": namingTemplateData, "ExportPaths": exportPathsData}, json_file, indent=4)
 
+        logger.debug("Settings Saved")
+
 
     #   Adds Dir to ExportToDir User Settings GUI
     @err_catcher(name=__name__)
@@ -659,6 +690,8 @@ class Prism_ExportToDir_Functions(object):
                 tw_exportTo.setItem(row_position, 0, QTableWidgetItem(name))
                 tw_exportTo.setItem(row_position, 1, QTableWidgetItem(path))
 
+            logger.debug("Export Directory added.")
+
             #   Saves UI List to JSON file
             self.saveSettings()
 
@@ -672,6 +705,8 @@ class Prism_ExportToDir_Functions(object):
         if selectedRow != -1:
             tw_exportTo.removeRow(selectedRow)
 
+            logger.debug("Removed Export Directory.")
+
             #   Saves UI List to JSON file
             self.saveSettings()
 
@@ -679,14 +714,20 @@ class Prism_ExportToDir_Functions(object):
     @err_catcher(name=__name__)
     def loadData(self, dlg):
 
-        pData = self.core.getConfig(config="project", dft=3)
-        self.loadSaveDirs(pData)
+        try:
+            pData = self.core.getConfig(config="project", dft=3)
+            self.loadSaveDirs(pData)
+            dlg.e_customLoc.setText(self.sourceDir)
 
-        dlg.e_customLoc.setText(self.sourceDir)
+            logger.debug("Loaded Project data.")
 
+        except:
+            logger.warning("ERROR: Failed to Load Project data.")
 
     @err_catcher(name=__name__)                         #   TODO ADD SETTINGS MENU FOLDERS
     def loadSaveDirs(self, pData):    
+
+        logger.debug("Loading ExportTo Directories")
 
         projectPaths = set()
         self.saveDirs = []
@@ -795,6 +836,7 @@ class Prism_ExportToDir_Functions(object):
 
         self.setPlaceholderName(dlg)
 
+        logger.debug(f"Sequence Mode changed to {not self.singleFileMode}")
 
     @err_catcher(name=__name__)
     def setPlaceholderName(self, dlg, load=False):
@@ -950,6 +992,9 @@ class Prism_ExportToDir_Functions(object):
             customDir = QFileDialog.getExistingDirectory(None, "Select Save Directory", path)
             customDir = customDir.replace("/", "\\")
             dlg.e_customLoc.setText(customDir)
+
+            logger.debug("Directory Selected")
+
         #   If set not True, then just opens file explorer
         else:
             cmd = "explorer " + path
@@ -1000,6 +1045,7 @@ class Prism_ExportToDir_Functions(object):
             #   Checks if file already exists and then opens Dialogue
             if os.path.exists(outputPath):
                 if self.executePopUp(dlg, "File", outputPath) == False:
+                    logger.debug(f"File already exists: {outputPath}")
                     return
 
             #   Makes Dir if it doesn't exist    
@@ -1076,6 +1122,7 @@ class CopyThread(QObject):
     
     @err_catcher(name=__name__)
     def run(self):
+        logger.debug("Executing Export")
         try:
             originalPath = self.sourcePath
             self.tempDir = None
@@ -1128,10 +1175,12 @@ class CopyThread(QObject):
             self.dlg.progressBar.setStyleSheet(PROG_RED)
             self.progressUpdated.emit(100)
             self.core.popup(e)
+            logger.warning(f"ERROR: Export Failed:  {e}")
 
 
     @err_catcher(name=__name__)
     def copyFile(self, src, dest, showProg=True):
+        logger.debug(f"Copying: {src}")
 
         try:
             if showProg:
@@ -1157,11 +1206,14 @@ class CopyThread(QObject):
                 self.dlg.l_status.setText("Complete.")
                 self.dlg.progressBar.setStyleSheet(PROG_GREEN)
 
+            logger.debug(f"SUCCESS: Copied {src}")
+
         except Exception as e:
             self.dlg.l_status.setText("ERROR")
             self.dlg.progressBar.setStyleSheet(PROG_RED)
             self.progressUpdated.emit(100)
             self.core.popup(e)
+            logger.warning(f"ERROR: Failed to copy: {e}")
 
 
     @err_catcher(name=__name__)
@@ -1181,6 +1233,7 @@ class CopyThread(QObject):
 
     @err_catcher(name=__name__)
     def copyDirectory(self, src, dest):
+        logger.debug("Copying Directory")
         try:
             self.dlg.l_status.setText("Copying...")
             #   Gets number of files in directory
@@ -1193,8 +1246,10 @@ class CopyThread(QObject):
                     # Ensure it's a file and not in a subdirectory
                     if os.path.isfile(srcFile) and os.path.dirname(srcFile) == src:
                         destFile = os.path.join(dest, os.path.relpath(srcFile, src))
+
                         #   Calls copyFile for each file, but disables prog for each file
                         self.copyFile(srcFile, destFile, showProg=False)
+
                         copiedFiles += 1
                         progressPercentage = int(copiedFiles / totalFiles * 100)
                         self.progressUpdated.emit(progressPercentage)
@@ -1202,12 +1257,15 @@ class CopyThread(QObject):
             self.dlg.l_status.setText("Complete.")
             self.progressUpdated.emit(100)
             self.dlg.progressBar.setStyleSheet(PROG_GREEN)
+            logger.debug(f"SUCCESS: Copied {src}")
 
         except Exception as e:
             self.dlg.l_status.setText("ERROR.")
             self.progressUpdated.emit(100)
             self.dlg.progressBar.setStyleSheet(PROG_RED)
             self.core.popup(e)  # TESTING
+            logger.warning(f"ERROR: Copying failed for {src}")
+            logger.warning(e)
 
 
     @err_catcher(name=__name__)
@@ -1221,6 +1279,7 @@ class CopyThread(QObject):
 
         self.dlg.l_status.setText("Zipping...")
 
+        logger.debug(f"Zipping {zipFilename}")
         try:
             with zipfile.ZipFile(zipPath, 'w', zipfile.ZIP_DEFLATED) as zip_file:
                 if os.path.isdir(originalPath):
@@ -1245,6 +1304,7 @@ class CopyThread(QObject):
                     zip_file.write(originalPath, arcname=arcname)
 
                     self.progressUpdated.emit(75)
+                    logger.debug(f"SUCCESS: Zipped {zipFilename}")
 
             return zipPath
     
@@ -1253,6 +1313,7 @@ class CopyThread(QObject):
             self.progressUpdated.emit(100)
             self.dlg.progressBar.setStyleSheet(PROG_RED)
             self.core.popup(e)  # TESTING
+            logger.warning(f"ERROR: Failed to Zip {zipFilename}")
 
 
 class AddExportToDirDialog(QDialog):
