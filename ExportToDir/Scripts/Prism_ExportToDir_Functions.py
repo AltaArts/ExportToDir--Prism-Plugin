@@ -164,10 +164,13 @@ class Prism_ExportToDir_Functions(object):
     #   Called with Callback - Product Browser
     @err_catcher(name=__name__)
     def productSelectorContextMenuRequested(self, origin, viewUi, pos, rcmenu):
+        #   Checks to ensure that the selected item is a version
         version = origin.getCurrentVersion()
         if not version:
             return
-
+        if viewUi != origin.tw_versions:
+            return
+        
         self.menuContext = "Product Files:"
         self.singleFileMode = True
         fileData = None
