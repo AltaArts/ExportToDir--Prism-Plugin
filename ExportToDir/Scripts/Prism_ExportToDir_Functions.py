@@ -708,10 +708,10 @@ class Prism_ExportToDir_Functions(object):
                     exportPathsData.append({"Name": name, "Path": location})
 
             #   Updates current with new
-            self.namingTemplateData = namingTemplateData        
+            self.nameTemplateData = namingTemplateData        
             self.exportPaths = exportPathsData
 
-            #   Builds dict
+            #   Builds dict but does not update recents list
             self.settingsData = {"NamingTemplate": namingTemplateData,
                                 "ExportPaths": exportPathsData,
                                 "Recents": self.recents}
@@ -721,7 +721,7 @@ class Prism_ExportToDir_Functions(object):
             #   Sets recents
             self.recents = self.makeRecents()
 
-            #   Builds dict
+            #   Builds dict and only updates recent list
             self.settingsData = {"NamingTemplate": self.nameTemplateData,
                                 "ExportPaths": self.exportPaths,
                                 "Recents": self.recents}
