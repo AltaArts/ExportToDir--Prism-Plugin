@@ -81,8 +81,6 @@ class Prism_ExportToDir_Functions(object):
 
         self.loadedPlugins = []
         self.singleFileMode = True
-        # self.saveDirs = ""                                    #   TODO    CLEANUP
-        # self.outputPath = ""
 
         #   Global Settings File Data
         pluginLocation = os.path.dirname(os.path.dirname(__file__))
@@ -415,8 +413,8 @@ class Prism_ExportToDir_Functions(object):
         self.tw_exportTo.setSelectionBehavior(QTableWidget.SelectRows)
         self.tw_exportTo.setSelectionMode(QTableWidget.SingleSelection)
 
-        tip = ("Directories that will be available in ExportToDir in addition to Project Locations.\n\n"                #   TODO
-               "Short Name will be displayed in the right-click menu."                                                  #   CHANGE LANGUAGE
+        tip = ("Directories that will be available in ExportToDir in addition to Project Locations.\n\n"
+               "Short Name will be displayed in the right-click menu."
                 )
         self.tw_exportTo.setToolTip(tip)
 
@@ -505,7 +503,7 @@ class Prism_ExportToDir_Functions(object):
     def loadCoreData(self, fileData):
         try:
             if fileData == None:
-                self.core.popup("No File Data Found")               #   TESTING
+                logger.debug("No File Data Found")
 
             self.projectName = ""
             self.userName = ""
