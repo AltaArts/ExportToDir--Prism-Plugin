@@ -205,7 +205,7 @@
          <item>
           <widget class="QLabel" name="l_radioProjectFolder">
            <property name="text">
-            <string>Project Folders            (from Export To Dir User Settings and Locations in the Project Settings):</string>
+            <string>Project Folders</string>
            </property>
           </widget>
          </item>
@@ -549,15 +549,29 @@
         </widget>
        </item>
        <item>
-        <widget class="QDialogButtonBox" name="buttonBox">
-         <property name="layoutDirection">
-          <enum>Qt::LeftToRight</enum>
+        <spacer name="horizontalSpacer_13">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
-         <property name="standardButtons">
-          <set>QDialogButtonBox::Close|QDialogButtonBox::Save</set>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>40</width>
+           <height>20</height>
+          </size>
          </property>
-         <property name="centerButtons">
-          <bool>false</bool>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QPushButton" name="but_execute">
+         <property name="text">
+          <string>Execute</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="but_close">
+         <property name="text">
+          <string>Close</string>
          </property>
         </widget>
        </item>

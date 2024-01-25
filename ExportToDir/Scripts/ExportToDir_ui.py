@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'ExportToDirNkSilF.ui'
+## Form generated from reading UI file 'ExportToDirbrrLPJ.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -305,13 +305,19 @@ class Ui_exportToDirDlg(object):
 
         self.f_buttonsSub.addWidget(self.but_explorer)
 
-        self.buttonBox = QDialogButtonBox(exportToDirDlg)
-        self.buttonBox.setObjectName(u"buttonBox")
-        self.buttonBox.setLayoutDirection(Qt.LeftToRight)
-        self.buttonBox.setStandardButtons(QDialogButtonBox.Close|QDialogButtonBox.Save)
-        self.buttonBox.setCenterButtons(False)
+        self.horizontalSpacer_13 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
-        self.f_buttonsSub.addWidget(self.buttonBox)
+        self.f_buttonsSub.addItem(self.horizontalSpacer_13)
+
+        self.but_execute = QPushButton(exportToDirDlg)
+        self.but_execute.setObjectName(u"but_execute")
+
+        self.f_buttonsSub.addWidget(self.but_execute)
+
+        self.but_close = QPushButton(exportToDirDlg)
+        self.but_close.setObjectName(u"but_close")
+
+        self.f_buttonsSub.addWidget(self.but_close)
 
 
         self.f_buttonsMain.addLayout(self.f_buttonsSub)
@@ -338,7 +344,7 @@ class Ui_exportToDirDlg(object):
         self.rb_imageSeq.setText(QCoreApplication.translate("exportToDirDlg", u"Image Sequence", None))
         self.l_DeliveryFolder.setText(QCoreApplication.translate("exportToDirDlg", u"Delivery Folder:", None))
         self.rb_ProjectFolder.setText("")
-        self.l_radioProjectFolder.setText(QCoreApplication.translate("exportToDirDlg", u"Project Folders            (from Export To Dir User Settings and Locations in the Project Settings):", None))
+        self.l_radioProjectFolder.setText(QCoreApplication.translate("exportToDirDlg", u"Project Folders", None))
         self.rb_customFolder.setText("")
         self.l_radioCustomFolder.setText(QCoreApplication.translate("exportToDirDlg", u"Custom Folder:", None))
         self.but_customPathSearch.setText(QCoreApplication.translate("exportToDirDlg", u"...", None))
@@ -348,5 +354,7 @@ class Ui_exportToDirDlg(object):
         self.chb_zipFile.setText(QCoreApplication.translate("exportToDirDlg", u"Create Zip File", None))
         self.l_status.setText(QCoreApplication.translate("exportToDirDlg", u"TextLabel", None))
         self.but_explorer.setText(QCoreApplication.translate("exportToDirDlg", u"Open in Explorer", None))
+        self.but_execute.setText(QCoreApplication.translate("exportToDirDlg", u"Execute", None))
+        self.but_close.setText(QCoreApplication.translate("exportToDirDlg", u"Close", None))
     # retranslateUi
 
