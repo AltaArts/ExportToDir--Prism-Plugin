@@ -63,10 +63,12 @@ import json
 import ntpath
 import logging
 
+#   Prism Core logger
 logger = logging.getLogger(__name__)
 
 from ExportToDir import ExportToDir
 
+#   Colors for Progress Bar
 PROG_GREEN = "QProgressBar::chunk { background-color: rgb(0, 150, 0); }"
 PROG_BLUE = "QProgressBar::chunk { background-color: rgb(0, 131, 195); }"
 PROG_RED = "QProgressBar::chunk { background-color: rgb(225, 0, 0); }"
@@ -78,16 +80,16 @@ class Prism_ExportToDir_Functions(object):
         self.plugin = plugin
 
         self.loadedPlugins = []
-
         self.singleFileMode = True
+        # self.saveDirs = ""                                    #   TODO    CLEANUP
+        # self.outputPath = ""
 
-        self.menuContext = ""
-        self.saveDirs = ""
-        self.outputPath = ""
-
-        #   Global Settings File
+        #   Global Settings File Data
         pluginLocation = os.path.dirname(os.path.dirname(__file__))
         self.settingsFile = os.path.join(pluginLocation, "ExportToDir_Config.json")
+
+        self.loadSettings()
+
 
         #   Callbacks                                           #   TODO    Doesn't seem to be a callback for the Project Chooser
         # self.core.registerCallback("projectBrowserContextMenuRequested", self.projectBrowserContextMenuRequested, plugin=self)      
@@ -109,7 +111,7 @@ class Prism_ExportToDir_Functions(object):
     @err_catcher(name=__name__)
     def onUserSettingsSave(self, origin):
 
-        self.saveSettings()
+        self.saveSettings(mode="Settings")
         
 
 ########################
@@ -188,6 +190,7 @@ class Prism_ExportToDir_Functions(object):
             infoPath = self.core.getVersioninfoPath(infoFolder)
             fileData = self.core.getConfig(configPath=infoPath)
 
+            fileData["project_name"] = self.core.projectName
             fileData["sourcePath"] = sourcePath
             fileData["sourceDir"], fileData["sourceFilename"] = ntpath.split(sourcePath)
             fileData["extension"] = os.path.splitext(fileData["sourceFilename"])[1]
@@ -211,7 +214,7 @@ class Prism_ExportToDir_Functions(object):
     #   Called with Callback - Media Browser
     @err_catcher(name=__name__)
     def mediaPlayerContextMenuRequested(self, origin, menu):
-
+        #   Checks to make sure right-click was on Media Browser
         if not type(origin.origin).__name__ == "MediaBrowser":
             return
 
@@ -227,6 +230,7 @@ class Prism_ExportToDir_Functions(object):
 
         try:
             logger.debug("Loading Media Data")
+            #   Retrieves some File Data
             rawData = origin.getSelectedContexts()
             if rawData and isinstance(rawData[0], dict):
                 fileData = rawData[0]
@@ -235,16 +239,19 @@ class Prism_ExportToDir_Functions(object):
 
             fileData["sourceDir"] = fileData["path"]
             fileData["extension"] = os.path.splitext(fileData["source"])[1]
+
         except Exception as e:
             msg = f"Error Getting File Context Info {str(e)}"
             self.core.popup(msg)
             logger.warning(f"ERROR: Cannot Load Media Data: {e}")
 
+        #   If the item is a single file
         if len(origin.seq) < 2:
             self.singleFileMode = True
             fileData["sourcePath"] = origin.seq[0]
             fileData["sourceFilename"] = os.path.basename(origin.seq[0])
 
+        #   If the item is an Image Sequence
         elif len(origin.seq) > 1:
             self.singleFileMode = False
             fileData["currentFrame"] = os.path.basename(origin.seq[origin.getCurrentFrame()])
@@ -272,29 +279,12 @@ class Prism_ExportToDir_Functions(object):
             return
         
         self.menuContext = "Library Files:"
-
         self.singleFileMode = True
-
-        # print("\nSTART\n")
-        # print(dir(origin))                                             #   TESTING
-
-        # print(f"origin.objectName():  {origin.objectName()}")          #   THIS RETURNS "texture"
-        # print(f"origin.path:  {origin.path}")
-        # print(f"origin.paths:  {origin.paths}")                        #    RETURNS NONE
-        # print(f"stackUnder:  {origin.stackUnder()}")                        #    RETURNS NONE
-
-        # print("\nSTART\n")
-
-        # print("\nSTART\n")
-        # self.core.updateEnvironment()
-        # filepath = self.core.getCurrentFileName()
-        # print(f"getScenefileData:  {self.core.getScenefileData(filepath)}")
-        # print("\nEND\n")
 
         logger.debug("Loading Library Data")
 
         try:
-
+                                                                          #   TODO    Still want to get more Details
             sourcePath = origin.path
             sourceDir = os.path.dirname(sourcePath)
             sourceBasename = os.path.basename(sourcePath)
@@ -328,9 +318,6 @@ class Prism_ExportToDir_Functions(object):
     def userSettings_loadUI(self, origin):  # ADDING "Export to Dir" TO SETTINGS
 
         logger.debug("Loading ExportToDir Menu")
-
-        # Loads Settings File
-        namingTemplateData, exportToList = self.loadSettings()
 
         self.getLoadedPlugins()
 
@@ -423,11 +410,13 @@ class Prism_ExportToDir_Functions(object):
         self.tw_exportTo.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self.tw_exportTo.horizontalHeader().setDefaultAlignment(Qt.AlignLeft)
 
-        # Sets initial Table size
+        # Configure table options
         self.tw_exportTo.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.tw_exportTo.setSelectionBehavior(QTableWidget.SelectRows)
+        self.tw_exportTo.setSelectionMode(QTableWidget.SingleSelection)
 
-        tip = ("Directories that will be available in ExportToDir in addition to Project Locations.\n\n"
-               "Short Name will be displayed in the right-click menu."
+        tip = ("Directories that will be available in ExportToDir in addition to Project Locations.\n\n"                #   TODO
+               "Short Name will be displayed in the right-click menu."                                                  #   CHANGE LANGUAGE
                 )
         self.tw_exportTo.setToolTip(tip)
 
@@ -463,17 +452,17 @@ class Prism_ExportToDir_Functions(object):
         b_removeoexportTo.clicked.connect(lambda: self.removeExportToDir(origin, self.tw_exportTo))
 
         # Populates lists from Settings File Data
-        if namingTemplateData:
-            self.e_naming_SceneFiles.setText(namingTemplateData.get("Scene Files:", ""))
-            self.e_naming_ProductFiles.setText(namingTemplateData.get("Product Files:", ""))
-            self.e_naming_MediaFiles.setText(namingTemplateData.get("Media Files:", ""))
-            self.e_naming_LibraryFiles.setText(namingTemplateData.get("Library Files:", ""))
-        if exportToList:
-            for item in exportToList:
-                row_position = self.tw_exportTo.rowCount()
-                self.tw_exportTo.insertRow(row_position)
-                self.tw_exportTo.setItem(row_position, 0, QTableWidgetItem(item.get("Name", "")))
-                self.tw_exportTo.setItem(row_position, 1, QTableWidgetItem(item.get("Path", "")))
+        namingTemplateData = self.nameTemplateData
+        self.e_naming_SceneFiles.setText(namingTemplateData.get("Scene Files:", ""))
+        self.e_naming_ProductFiles.setText(namingTemplateData.get("Product Files:", ""))
+        self.e_naming_MediaFiles.setText(namingTemplateData.get("Media Files:", ""))
+        self.e_naming_LibraryFiles.setText(namingTemplateData.get("Library Files:", ""))
+
+        for item in self.exportPaths:
+            row_position = self.tw_exportTo.rowCount()
+            self.tw_exportTo.insertRow(row_position)
+            self.tw_exportTo.setItem(row_position, 0, QTableWidgetItem(item.get("Name", "")))
+            self.tw_exportTo.setItem(row_position, 1, QTableWidgetItem(item.get("Path", "")))
 
         # Add Tab to User Settings
         origin.addTab(origin.w_exportTo, "Export to Dir")
@@ -483,6 +472,7 @@ class Prism_ExportToDir_Functions(object):
     @err_catcher(name=__name__)
     def getToolTipItems(self, template, textbox):
         
+        #   Adds tooltip to each template box
         templateItems = "Available variables:\n\n"
         for key, value in template.items():
             if textbox in value:
@@ -513,13 +503,9 @@ class Prism_ExportToDir_Functions(object):
     #   Receives File Data and Populates Variables
     @err_catcher(name=__name__)
     def loadCoreData(self, fileData):
-
-        # print("\n\n")                                               #   TESTING
         try:
             if fileData == None:
-                self.core.popup("No File Data Found")
-
-            # print(f"fileData:  {fileData}")                         #   TESTING
+                self.core.popup("No File Data Found")               #   TESTING
 
             self.projectName = ""
             self.userName = ""
@@ -582,98 +568,171 @@ class Prism_ExportToDir_Functions(object):
         except Exception as e:
             msg = f"Error opening Config File {str(e)}"
             self.core.popup(msg)
-############  vvvvvvvvvvvvvvvvvvvvvvvvvvvv   ################################
+            logger.warning(f"Error opening Config File {str(e)}")
 
-        # print("\n\n")                           #   TESTING
-              
-        # attributes = ["projectName",
-        #               "userName",
-        #               "entityType",
-        #               "sequenceName",
-        #               "shotName",
-        #               "assetName",
-        #               "deptName",
-        #               "taskName",
-        #               "productName",
-        #               "identifier",
-        #               "version",
-        #               "aov",
-        #               "channel",
-        #               "sourcePath",
-        #               "sourceDir",
-        #               "sourceFilename",
-        #               "currentFrame",
-        #               "fameNumber",
-        #               "sourceExt"]
-
-        # for attribute in attributes:
-        #     if hasattr(self, attribute):
-        #         value = getattr(self, attribute)
-        #         print(f"{attribute}: {value}")
-############  ^^^^^^^^^^^^^^^^^^^^^^^^^^    ##############################
 
     #   Load Settings from Global Settings File
     @err_catcher(name=__name__)
-    def loadSettings(self, context=None):
+    def loadSettings(self):
         logger.debug("Loading Settings")
 
         try:
             with open(self.settingsFile, "r") as json_file:
-                data = json.load(json_file)
+                settingsData = json.load(json_file)
 
-                namingTemplate = data.get("NamingTemplate", {})
-                exportPaths = data.get("ExportPaths", [])
-
-                if context is None:
-                    return namingTemplate, exportPaths
-                else:
-                    template = namingTemplate.get(context)
-                    return template
+            self.nameTemplateData = settingsData["NamingTemplate"]
+            self.exportPaths = settingsData["ExportPaths"]
+            self.recents = settingsData["Recents"]
 
         except FileNotFoundError:
             logger.debug("Setting do not exist.  Creating new Settings Files.")
             # Create the settings file if it doesn't exist
-            with open(self.settingsFile, "w") as json_file:
-                json.dump({}, json_file)
-            # Return an empty dictionary
-            return None, None
+            self.createSettings()
+            self.loadSettings()
+        
+        except Exception as e:
+            self.core.popup(f"ExportToDir Config file is corrupt.\n"
+                            f"Will create new Config file.\n\n"
+                            f"{e}"
+                            )
+            #   Removes Corrupt Settings File and creates new
+            os.remove(self.settingsFile)
+            self.createSettings()
+            self.loadSettings()
+            
+
+    #   Saves Settings to Global Settings File
+    @err_catcher(name=__name__)
+    def createSettings(self):
+
+        #   Simple Defaults
+        namingTemplateData = {}
+        exportPathsData = []
+        recents = []
+        NameTemplates = ["Scene Files:",
+                        "Product Files:",
+                        "Media Files:",
+                        "Library Files:"]
+
+        # Populates naming Template data from line edits
+        for name in NameTemplates:
+            namingTemplateData[name] = "@PROJECT@--@FILENAME@"
+
+        #   Makes the data list
+        self.settingsData = {"NamingTemplate": namingTemplateData,
+                            "ExportPaths": exportPathsData,
+                            "Recents": recents}
+
+        self.saveSettings()
+        logger.debug("Created Settings File")
+    
+
+    #   Saves Settings to Global Settings File
+    @err_catcher(name=__name__)
+    def makeRecents(self):
+
+        #   Gets current Recents data
+        recentsList = self.recents
+
+        #   Makes new Recent Items based on UI items
+        currRecents = {}
+        currRecents["ProjectName"] = self.core.projectName
+
+        if self.dlg.rb_ProjectFolder.isChecked():
+            currRecents["folderType"] = "Project"
+        elif self.dlg.rb_customFolder.isChecked():
+            currRecents["folderType"] = "Custom"
+
+        currRecents["projectFolder"] = self.dlg.cb_mediaFolders.currentText()
+        currRecents["customFolder"] = self.dlg.e_customLoc.text()
+        currRecents["appendFolder"] = self.dlg.e_appendFolder.text()
+        currRecents["useZip"] = self.dlg.chb_zipFile.isChecked()
+
+        # Check if an item with the same "ProjectName" already exists and remove if exists
+        for existingRecents in recentsList:
+            if existingRecents["ProjectName"] == currRecents["ProjectName"]:
+                recentsList.remove(existingRecents)
+                break
+
+        # If there are already five items, remove the oldest one
+        if len(recentsList) >= 5:
+            recentsList.pop(0)
+        #   Add current Recent to bottom of list
+        recentsList.append(currRecents)
+
+        return recentsList
+    
+
+    @err_catcher(name=__name__)
+    def getRecents(self):
+        #   Gets active Project Name
+        projectName = self.core.projectName
+
+        #   Return item that matches current Project
+        for recentsItem in self.recents:
+            if recentsItem.get("ProjectName") == projectName:
+                return recentsItem
+
+        # Return None if no match is found
+        return None
 
 
     #   Saves Settings to Global Settings File
     @err_catcher(name=__name__)
-    def saveSettings(self):
+    def saveSettings(self, mode=None):
 
-        namingTemplateData = {}
-        exportPathsData = []
-        NameTemplates = ["SceneFiles",
-                      "ProductFiles",
-                      "MediaFiles",
-                      "LibraryFiles"]
+        #   Used from Prism User Settings Menu
+        if mode == "Settings":
+            namingTemplateData = {}
+            exportPathsData = []
+            NameTemplates = ["SceneFiles",
+                            "ProductFiles",
+                            "MediaFiles",
+                            "LibraryFiles"]
 
-        # Populates naming Template data from line edits
-        for name in NameTemplates:
-            label = getattr(self, f"l_naming_{name}")
-            line_edit = getattr(self, f"e_naming_{name}")
+            # Populates naming Template data from line edits
+            for name in NameTemplates:
+                label = getattr(self, f"l_naming_{name}")
+                line_edit = getattr(self, f"e_naming_{name}")
 
-            labelText = label.text()
-            contents = line_edit.text()
-            namingTemplateData[labelText] = contents
+                labelText = label.text()
+                contents = line_edit.text()
+                namingTemplateData[labelText] = contents
 
-        # Populates export paths data from UI List
-        for row in range(self.tw_exportTo.rowCount()):
-            nameItem = self.tw_exportTo.item(row, 0)
-            pathItem = self.tw_exportTo.item(row, 1)
+            # Populates export paths data from UI List
+            for row in range(self.tw_exportTo.rowCount()):
+                nameItem = self.tw_exportTo.item(row, 0)
+                pathItem = self.tw_exportTo.item(row, 1)
 
-            if nameItem and pathItem:
-                name = nameItem.text()
-                location = pathItem.text()
-                exportPathsData.append({"Name": name, "Path": location})
+                if nameItem and pathItem:
+                    name = nameItem.text()
+                    location = pathItem.text()
+                    exportPathsData.append({"Name": name, "Path": location})
 
-        # Save both dictionaries
+            #   Updates current with new
+            self.namingTemplateData = namingTemplateData        
+            self.exportPaths = exportPathsData
+
+            #   Builds dict
+            self.settingsData = {"NamingTemplate": namingTemplateData,
+                                "ExportPaths": exportPathsData,
+                                "Recents": self.recents}
+
+        #   Used from Export Dialogue when executing
+        elif mode == "Recents":
+            #   Sets recents
+            self.recents = self.makeRecents()
+
+            #   Builds dict
+            self.settingsData = {"NamingTemplate": self.nameTemplateData,
+                                "ExportPaths": self.exportPaths,
+                                "Recents": self.recents}
+
+        # Save to file
         with open(self.settingsFile, "w") as json_file:
-            json.dump({"NamingTemplate": namingTemplateData, "ExportPaths": exportPathsData}, json_file, indent=4)
+            json.dump(self.settingsData, json_file, indent=4)
 
-        logger.debug("Settings Saved")
+        logger.debug("Settings Saved")      #   TODO
 
 
     #   Adds Dir to ExportToDir User Settings GUI
@@ -696,155 +755,210 @@ class Prism_ExportToDir_Functions(object):
             logger.debug("Export Directory added.")
 
             #   Saves UI List to JSON file
-            self.saveSettings()
+            self.saveSettings(mode="Settings")
 
 
     #   Removes Dir to ExportToDir User Settings GUI
     @err_catcher(name=__name__)
     def removeExportToDir(self, origin, tw_exportTo):
-
+        #   Removes row from table
         selectedRow = tw_exportTo.currentRow()
-
         if selectedRow != -1:
             tw_exportTo.removeRow(selectedRow)
 
             logger.debug("Removed Export Directory.")
 
             #   Saves UI List to JSON file
-            self.saveSettings()
+            self.saveSettings(mode="Settings")
 
 
     @err_catcher(name=__name__)
-    def loadData(self, dlg):
-
+    def loadData(self):
+        #   Loads default dir to Custom Dir
         try:
             pData = self.core.getConfig(config="project", dft=3)
             self.loadSaveDirs(pData)
-            dlg.e_customLoc.setText(self.sourceDir)
+            self.dlg.e_customLoc.setText(self.sourceDir)
 
             logger.debug("Loaded Project data.")
 
         except:
             logger.warning("ERROR: Failed to Load Project data.")
 
-    @err_catcher(name=__name__)                         #   TODO ADD SETTINGS MENU FOLDERS
-    def loadSaveDirs(self, pData):    
+
+    @err_catcher(name=__name__)
+    def loadSaveDirs(self, pData):
 
         logger.debug("Loading ExportTo Directories")
 
         projectPaths = set()
         self.saveDirs = []
 
-        #   Loads Dirs from Project Render Locations
+        # Loads Dirs from Project Render Locations
         if pData["render_paths"]:
             renderLocs = pData["render_paths"]
 
             for locName, locPath in renderLocs.items():
                 if locPath not in projectPaths:
                     projectPaths.add(locPath)
-                    self.saveDirs.append(locPath)
+                    self.saveDirs.append({"Name": locName, "Path": locPath})
 
-        #   Loads Dirs from Project Export Locations
+        # Loads Dirs from Project Export Locations
         if pData["export_paths"]:
             exportLocs = pData["export_paths"]
 
             for locName, locPath in exportLocs.items():
                 if locPath not in projectPaths:
                     projectPaths.add(locPath)
-                    self.saveDirs.append(locPath)
+                    self.saveDirs.append({"Name": locName, "Path": locPath})
 
         # Load Dirs from Export to Dir User Settings
-        namingTemplate, exportPaths = self.loadSettings()
-        for item in exportPaths:
+        exportToList = self.exportPaths
+        for item in exportToList:
+            name = item.get("Name")
             path = item.get("Path")
             if path and path not in projectPaths:
                 projectPaths.add(path)
-                self.saveDirs.append(path)
+                self.saveDirs.append({"Name": name, "Path": path})
 
 
     @err_catcher(name=__name__)
     def exportToDialogue(self):
 
-        dlg = ExportToDir()
-        dlg.setWindowTitle("Export to Directory")
+        #   Creates Dialogue Instance
+        self.dlg = ExportToDir()
 
-        dlg.rb_singleImage.hide()
-        dlg.rb_imageSeq.hide()
-        dlg.rb_singleImage.setChecked(True)
+        self.dlg.setWindowTitle("Export to Directory")
 
-        self.loadData(dlg)
+        #   Configures UI based on SingleImage
+        self.dlg.rb_singleImage.hide()
+        self.dlg.rb_imageSeq.hide()
+        self.dlg.rb_singleImage.setChecked(True)
 
-        existingFolders = self.saveDirs
-        dlg.cb_mediaFolders.addItems(existingFolders)
+        #   Loads Settings Data
+        self.loadData()
 
-        dlg.rb_ProjectFolder.setChecked(True)
+        #   Retrieves Locations list
+        formattedDirList = self.getFormattedDirs()
+        self.dlg.cb_mediaFolders.addItems(formattedDirList)
+        #   Defaults to Project Folder
+        self.dlg.rb_ProjectFolder.setChecked(True)
 
-        self.setPlaceholderName(dlg, load=True)
-        self.setSequenceMode(dlg)
+        #   Sets Placeholder name based on Template
+        self.setPlaceholderName(load=True)
+        #   Configures Single or Image Sequence
+        self.setSequenceMode()
+
+        #   Loads Project Recents if they exist
+        recents = self.getRecents()
+        if recents != None:
+            if recents["folderType"] == "Project":
+                self.dlg.rb_ProjectFolder.setChecked(True)
+            elif recents["folderType"] == "Custom":
+                self.dlg.rb_customFolder.setChecked(True)
+
+            index = self.dlg.cb_mediaFolders.findText(recents["projectFolder"])
+            if index != -1:
+                self.dlg.cb_mediaFolders.setCurrentIndex(index)
+
+            self.dlg.e_customLoc.setText(recents["customFolder"])
+            self.dlg.e_appendFolder.setText(recents["appendFolder"])
+            self.dlg.chb_zipFile.setChecked(recents["useZip"])
 
         #   Tooltips for Dialogue
         tip = "Filename for export.  Template used to create default can be modified in User Settings"
-        dlg.e_mediaName.setToolTip(tip)
+        self.dlg.l_mediaName.setToolTip(tip)
+        self.dlg.e_mediaName.setToolTip(tip)
         tip = "Click to revert to template filename"
-        dlg.but_nameReset.setToolTip(tip)
+        self.dlg.but_nameReset.setToolTip(tip)
         tip = "Export single image from sequence"
-        dlg.rb_singleImage.setToolTip(tip)
+        self.dlg.rb_singleImage.setToolTip(tip)
         tip = "Export complete image sequence"
-        dlg.rb_imageSeq.setToolTip(tip)    
-        tip = "Directories listed in Project Settings->Locations"
-        dlg.l_radioProjectFolder.setToolTip(tip)   
-        tip = "Directories listed in User Settings->ExportToDir"
-        dlg.l_radioCustomFolder.setToolTip(tip)  
-        tip = "Sub directory under directory selected above"
-        dlg.e_appendFolder.setToolTip(tip)          
+        self.dlg.rb_imageSeq.setToolTip(tip)    
+        tip = "Directories listed in Project Settings->Locations and User Settings->ExportToDir"
+        self.dlg.rb_ProjectFolder.setToolTip(tip)
+        self.dlg.l_radioProjectFolder.setToolTip(tip)
+        self.dlg.cb_mediaFolders.setToolTip(tip)
+        tip = "Custom Directory"
+        self.dlg.rb_customFolder.setToolTip(tip)
+        self.dlg.l_radioCustomFolder.setToolTip(tip)
+        self.dlg.e_customLoc.setToolTip(tip)
+        tip = "Sub directory that will be appended to the Dir selected above"
+        self.dlg.l_appendFolder.setToolTip(tip)
+        self.dlg.e_appendFolder.setToolTip(tip)          
         tip = "Select to .zip the export contents to a single file"
-        dlg.chb_zipFile.setToolTip(tip)  
+        self.dlg.chb_zipFile.setToolTip(tip)  
         tip = "Final output path of export"
-        dlg.e_outputName.setToolTip(tip)  
+        self.dlg.e_outputName.setToolTip(tip)  
         tip = "Open export directory"
-        dlg.but_explorer.setToolTip(tip)  
+        self.dlg.but_explorer.setToolTip(tip)  
 
         #   Connections
-        dlg.e_mediaName.textEdited.connect(lambda: self.refreshOutputName(dlg))
-        dlg.but_nameReset.clicked.connect(lambda: self.setPlaceholderName(dlg, load=True))
-        dlg.butGroup_folder.buttonClicked.connect(lambda: self.refreshOutputName(dlg))
-        dlg.butGroup_imageSeq.buttonClicked.connect(lambda: self.setSequenceMode(dlg))
-        dlg.cb_mediaFolders.currentIndexChanged.connect(lambda: self.refreshOutputName(dlg))
-        dlg.but_customPathSearch.clicked.connect(lambda: self.openExplorer(dlg, self.sourcePath, set=True))
-        dlg.e_appendFolder.textEdited.connect(lambda: self.formatAppendFolder(dlg))
-        dlg.chb_zipFile.clicked.connect(lambda: self.setSequenceMode(dlg))
-        dlg.but_explorer.clicked.connect(lambda: self.openExplorer(dlg, self.outputPath))        
-        dlg.buttonBox.button(QDialogButtonBox.Save).clicked.connect(lambda: self.execute(dlg))
-        dlg.buttonBox.button(QDialogButtonBox.Close).clicked.connect(dlg.reject)        
+        self.dlg.e_mediaName.textEdited.connect(lambda: self.refreshOutputName())
+        self.dlg.but_nameReset.clicked.connect(lambda: self.setPlaceholderName(load=True))
+        self.dlg.butGroup_folder.buttonClicked.connect(lambda: self.refreshOutputName())
+        self.dlg.butGroup_imageSeq.buttonClicked.connect(lambda: self.setSequenceMode())
+        self.dlg.cb_mediaFolders.currentIndexChanged.connect(lambda: self.refreshOutputName())
+        self.dlg.but_customPathSearch.clicked.connect(lambda: self.openExplorer(self.sourcePath, set=True))
+        self.dlg.e_appendFolder.textEdited.connect(lambda: self.formatAppendFolder())
+        self.dlg.chb_zipFile.clicked.connect(lambda: self.setSequenceMode())
+        self.dlg.but_explorer.clicked.connect(lambda: self.openExplorer(self.outputPath))        
+        self.dlg.but_execute.clicked.connect(lambda: self.execute())
+        self.dlg.but_close.clicked.connect(self.dlg.reject)        
 
-        self.refreshOutputName(dlg)
-
-        dlg.exec_()
+        self.refreshOutputName()
+        self.dlg.exec_()
     
 
     @err_catcher(name=__name__)
-    def setSequenceMode(self, dlg):    
+    def getFormattedDirs(self):
+        # Get the font of the combobox
+        font = self.dlg.cb_mediaFolders.font()
 
-        if dlg.rb_singleImage.isChecked():
+        max_name_width = 0
+        formattedFolders = []
+
+        # Calculate the maximum width of the "Name" text items
+        metrics = QFontMetrics(font)
+        for entry in self.saveDirs:
+            name_width = metrics.width(entry['Name'])
+            max_name_width = max(max_name_width, name_width)
+
+        # Format the items with individually calculated padding for "Path" text
+        for entry in self.saveDirs:
+            name_width = metrics.width(entry['Name'])
+            padding_width = max_name_width - name_width
+            half_padding = padding_width // 3  # Divide by 3 for even distribution
+            padding = ' ' * half_padding
+            formattedFolders.append(f"{entry['Name']}:{padding}      {os.path.normpath(entry['Path'])}")
+
+        return formattedFolders
+
+
+    @err_catcher(name=__name__)
+    def setSequenceMode(self):    
+        if self.dlg.rb_singleImage.isChecked():
             self.singleFileMode = True
         else:
             self.singleFileMode = False
 
-        if dlg.rb_imageSeq.isChecked() and not dlg.chb_zipFile.isChecked():
-            dlg.e_mediaName.setReadOnly(True)
-            dlg.e_mediaName.setStyleSheet("color: rgb(120, 120, 120);")
+        if self.dlg.rb_imageSeq.isChecked() and not self.dlg.chb_zipFile.isChecked():
+            self.dlg.e_mediaName.setReadOnly(True)
+            self.dlg.e_mediaName.setStyleSheet("color: rgb(120, 120, 120);")
         else:
-            dlg.e_mediaName.setReadOnly(False)
-            dlg.e_mediaName.setStyleSheet("color: ;")
+            self.dlg.e_mediaName.setReadOnly(False)
+            self.dlg.e_mediaName.setStyleSheet("color: ;")
 
-        self.setPlaceholderName(dlg)
+        self.setPlaceholderName()
 
         logger.debug(f"Sequence Mode changed to {not self.singleFileMode}")
 
+
     @err_catcher(name=__name__)
-    def setPlaceholderName(self, dlg, load=False):
+    def setPlaceholderName(self, load=False):
 
         if self.singleFileMode:
+            #   Formats Filename
             if self.currentFrame:
                 baseName = os.path.basename(self.currentFrame)
                 fileNameNoExt = os.path.splitext(baseName)[0]
@@ -852,10 +966,11 @@ class Prism_ExportToDir_Functions(object):
                 fileNameNoExt = os.path.splitext(self.sourceFilename)[0]
 
         else:
-            dlg.rb_singleImage.show()
-            dlg.rb_imageSeq.show()
+            #   If image sequence detected will display the mode options
+            self.dlg.rb_singleImage.show()
+            self.dlg.rb_imageSeq.show()
             
-            if dlg.rb_imageSeq.isChecked():
+            if self.dlg.rb_imageSeq.isChecked():
                 fileNameNoExt = os.path.splitext(self.sourceFilename)[0]
             else:
                 fileNameNoExt = os.path.splitext(self.currentFrame)[0]
@@ -863,6 +978,7 @@ class Prism_ExportToDir_Functions(object):
         formattedNameNoExt = self.formatName(fileNameNoExt)
         formattedName = formattedNameNoExt + self.sourceExt
 
+        #   Possible replacements
         replacements = {
             "@PROJECT@": self.projectName,
             "@USER@": self.userName,
@@ -883,8 +999,9 @@ class Prism_ExportToDir_Functions(object):
             "@EXTENSION@": self.sourceExt
         }
 
-        # Perform replacements            
-        template = self.loadSettings(context=self.menuContext)
+        # Perform replacements
+        templateData = self.nameTemplateData
+        template = templateData.get(self.menuContext)
        
         if template:    #   Check if template loaded from Settings File
             placeholderName = template  # Initialize with the original template
@@ -893,10 +1010,10 @@ class Prism_ExportToDir_Functions(object):
         else:
             placeholderName = formattedName     #   Fallback name
 
-        dlg.e_mediaName.setText(placeholderName)
+        self.dlg.e_mediaName.setText(placeholderName)
 
         if not load:
-            self.refreshOutputName(dlg)
+            self.refreshOutputName()
 
 
     def formatName(self, inputName):
@@ -912,9 +1029,9 @@ class Prism_ExportToDir_Functions(object):
 
 
     @err_catcher(name=__name__)
-    def formatAppendFolder(self, dlg):
-        currentText = dlg.e_appendFolder.text()
-        placeholderText = dlg.e_appendFolder.placeholderText()
+    def formatAppendFolder(self):
+        currentText = self.dlg.e_appendFolder.text()
+        placeholderText = self.dlg.e_appendFolder.placeholderText()
 
         if currentText and currentText != placeholderText:
             # Check if the currentText needs a leading backslash
@@ -927,19 +1044,19 @@ class Prism_ExportToDir_Functions(object):
             # Check if formatted_name is not None before further processing
             if formatted_name is not None:
                 # Update the e_appendFolder text with the formatted name
-                dlg.e_appendFolder.setText("\\" + formatted_name)
+                self.dlg.e_appendFolder.setText("\\" + formatted_name)
 
-            self.refreshOutputName(dlg)
+            self.refreshOutputName()
 
 
     @err_catcher(name=__name__)                                     #   TODO RENAMING SEQ's
-    def refreshOutputName(self, dlg):
+    def refreshOutputName(self):
 
         #   Get name form UI
-        placeholderName = dlg.e_mediaName.text()
+        placeholderName = self.dlg.e_mediaName.text()
         root, extension = os.path.splitext(placeholderName)
 
-        #   Cehck if name in UI has an extension
+        #   Check if name in UI has an extension
         if extension:
             fileNameNoExt = root
         else:
@@ -948,7 +1065,7 @@ class Prism_ExportToDir_Functions(object):
         formatedName = self.formatName(fileNameNoExt)
         
         #   Change extension to .zip if checked
-        if dlg.chb_zipFile.isChecked():
+        if self.dlg.chb_zipFile.isChecked():
             if not self.singleFileMode:
                 formatedName = formatedName.rstrip('#_.')
             formatedName = formatedName + ".zip"
@@ -956,14 +1073,17 @@ class Prism_ExportToDir_Functions(object):
             formatedName = fileNameNoExt + self.sourceExt
 
         #   User selected output folder type
-        if dlg.rb_ProjectFolder.isChecked():
-            outputPath = dlg.cb_mediaFolders.currentText()
-        elif dlg.rb_customFolder.isChecked():
-            outputPath = dlg.e_customLoc.text()
+        if self.dlg.rb_ProjectFolder.isChecked():
+            pathItem = self.dlg.cb_mediaFolders.currentText()
+            # Split the selected text into "Name" and "Path" based on the ":" delimiter
+            name, path = map(str.strip, pathItem.split(":", 1))
+            outputPath = path
+        elif self.dlg.rb_customFolder.isChecked():
+            outputPath = self.dlg.e_customLoc.text()
 
         #   Adds append folder if needed
-        if dlg.e_appendFolder.text():
-            appendFolder = dlg.e_appendFolder.text()
+        if self.dlg.e_appendFolder.text():
+            appendFolder = self.dlg.e_appendFolder.text()
 
             if appendFolder.startswith("\\"):
                 appendFolder = appendFolder[1:]
@@ -974,19 +1094,21 @@ class Prism_ExportToDir_Functions(object):
         else:
             self.outputPath = os.path.join(outputPath, formatedName)
 
-        dlg.e_outputName.setText(self.outputPath)
+        self.dlg.e_outputName.setText(self.outputPath)
 
-        self.resetProgBar(dlg)
+        self.resetProgBar()
 
 
     @err_catcher(name=__name__)
-    def openExplorer(self, dlg, path, set=False):
+    def openExplorer(self, path, set=False):
  
         #   Sets location to open Dialogue to        
-        if dlg.rb_ProjectFolder.isChecked():
-            path = dlg.cb_mediaFolders.currentText()
-        elif dlg.rb_customFolder.isChecked():
-            path = dlg.e_customLoc.text()
+        if self.dlg.rb_ProjectFolder.isChecked():
+            pathItem = self.dlg.cb_mediaFolders.currentText()
+            # Split the selected text into "Name" and "Path" based on the ":" delimiter
+            name, path = map(str.strip, pathItem.split(":", 1))
+        elif self.dlg.rb_customFolder.isChecked():
+            path = self.dlg.e_customLoc.text()
   
         path = path.replace("/", "\\")
 
@@ -994,44 +1116,47 @@ class Prism_ExportToDir_Functions(object):
         if set == True:
             customDir = QFileDialog.getExistingDirectory(None, "Select Save Directory", path)
             customDir = customDir.replace("/", "\\")
-            dlg.e_customLoc.setText(customDir)
+            self.dlg.e_customLoc.setText(customDir)
 
             logger.debug("Directory Selected")
 
-        #   If set not True, then just opens file explorer
+        #   If set not True, then just opens File Explorer
         else:
             cmd = "explorer " + path
             subprocess.Popen(cmd)
 
-        self.refreshOutputName(dlg)
+        self.refreshOutputName()
 
 
     @err_catcher(name=__name__)
-    def resetProgBar(self, dlg):
+    def resetProgBar(self):
 
         #   Resets Prog Bar status and color
-        dlg.l_status.setText("Idle...")
-        dlg.progressBar.reset()
-        dlg.progressBar.setStyleSheet(PROG_BLUE)
+        self.dlg.l_status.setText("Idle...")
+        self.dlg.progressBar.reset()
+        self.dlg.progressBar.setStyleSheet(PROG_BLUE)
 
 
     @err_catcher(name=__name__)
-    def execute(self, dlg):
+    def execute(self):
 
-        self.resetProgBar(dlg)
+        self.resetProgBar()
+
+        #   Saves selected optiosn to recents list
+        self.saveSettings(mode="Recents")
 
         #   Retrieves Name from UI
-        outputName = dlg.e_mediaName.text()
+        outputName = self.dlg.e_mediaName.text()
         fileName, extension = os.path.splitext(outputName)
 
         if fileName == "":
             self.core.popup("The Output Filename is blank.  Please enter a Filename")
             return
 
-        outputPath = dlg.e_outputName.text()
+        outputPath = self.dlg.e_outputName.text()
 
         #   Changes output to .zip if needed
-        zipFiles = dlg.chb_zipFile.isChecked()
+        zipFiles = self.dlg.chb_zipFile.isChecked()
         if zipFiles:
             outputPath = os.path.splitext(outputPath)[0] + '.zip'
 
@@ -1047,7 +1172,7 @@ class Prism_ExportToDir_Functions(object):
 
             #   Checks if file already exists and then opens Dialogue
             if os.path.exists(outputPath):
-                if self.executePopUp(dlg, "File", outputPath) == False:
+                if self.executePopUp("File", outputPath) == False:
                     logger.debug(f"File already exists: {outputPath}")
                     return
 
@@ -1056,7 +1181,7 @@ class Prism_ExportToDir_Functions(object):
             if not os.path.exists(outputDir):
                 os.mkdir(outputDir)
 
-            copyThread = CopyThread(dlg, 1, sourcePath, outputPath, zipFiles, core=self.core)
+            copyThread = CopyThread(self.dlg, 1, sourcePath, outputPath, zipFiles, core=self.core)
 
         # Case #2: Copy entire directory
         elif not self.singleFileMode and not zipFiles:
@@ -1066,13 +1191,13 @@ class Prism_ExportToDir_Functions(object):
 
             #   Checks if Dir exists and then opens Dialogue
             if os.path.exists(outputDir):
-                if self.executePopUp(dlg, "Directory", outputDir) == False:
+                if self.executePopUp("Directory", outputDir) == False:
                     return
                 
             else:   #   Makes Dir if it doesn't exist
                 os.mkdir(outputDir)
                 
-            copyThread = CopyThread(dlg, 2, sourceDir, outputDir, zipFiles, core=self.core)
+            copyThread = CopyThread(self.dlg, 2, sourceDir, outputDir, zipFiles, core=self.core)
 
         # Case #3:  Copy and Zip directory
         else:
@@ -1081,24 +1206,24 @@ class Prism_ExportToDir_Functions(object):
 
             #   Checks if file already exists and then opens Dialogue
             if os.path.exists(outputPath):
-                if self.executePopUp(dlg, "File", outputPath) == False:
+                if self.executePopUp("File", outputPath) == False:
                     return
                 
             #   Makes Dir if it doesn't exist    
             if not os.path.exists(outputDir):
                 os.mkdir(outputDir)
                 
-            copyThread = CopyThread(dlg, 3, sourceDir, outputPath, zipFiles, core=self.core)
+            copyThread = CopyThread(self.dlg, 3, sourceDir, outputPath, zipFiles, core=self.core)
 
-        copyThread.progressUpdated.connect(dlg.progressBar.setValue)
+        copyThread.progressUpdated.connect(self.dlg.progressBar.setValue)
         thread = threading.Thread(target=copyThread.run)
         thread.start()
 
 
     @err_catcher(name=__name__)
-    def executePopUp(self, dlg, checkType, output):
+    def executePopUp(self, checkType, output):
         reply = QMessageBox.question(
-            dlg,
+            self.dlg,
             f"{checkType} Exists",
             f"The {checkType} already exists:\n\n"
             f"{output}\n\n"
