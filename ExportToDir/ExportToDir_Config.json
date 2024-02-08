@@ -8,55 +8,7 @@
         "Library Files:": "@PROJECT@--@FILENAME@"
     },
     "ExportPaths": [
-        {
-            "Name": "Desktop",
-            "Path": "C:/Users/Alta Arts/Desktop"
-        },
-        {
-            "Name": "Client Share",
-            "Path": "D:/Dropbox/Alta Arts/01_Client Share"
-        }
     ],
     "Recents": [
-        {
-            "ProjectName": "Petersen Lot",
-            "folderType": "Custom",
-            "projectFolder": "Deliverables:      N:\\Data\\Projects\\Petersen Lot\\05_Deliverables",
-            "customFolder": "C:\\Users\\Alta Arts\\Desktop\\DELETE",
-            "appendFolder": "",
-            "useZip": false
-        },
-        {
-            "ProjectName": "MCM Shops - 38th Ave",
-            "folderType": "Project",
-            "projectFolder": "Desktop:            C:\\Users\\Alta Arts\\Desktop",
-            "customFolder": "N:\\Data\\Projects\\MCM Shops - 38th Ave\\03_Production\\Shots\\MCM_Shops\\Dolly_Center\\Export\\SynthEyes\\v0002",
-            "appendFolder": "\\Export",
-            "useZip": false
-        },
-        {
-            "ProjectName": "Hattiesburg Bottling Company",
-            "folderType": "Project",
-            "projectFolder": "Deliverables:      N:\\Data\\Projects\\Hattiesburg Bottling Company\\04_Deliverables",
-            "customFolder": "N:\\Data\\Projects\\Hattiesburg Bottling Company\\01_Production\\Assets\\HattiesburgBottlingCo_Bldg\\Export\\Resolve_Grade\\v0001",
-            "appendFolder": "",
-            "useZip": false
-        },
-        {
-            "ProjectName": "CG Trader",
-            "folderType": "Project",
-            "projectFolder": "Desktop:            C:\\Users\\Alta Arts\\Desktop",
-            "customFolder": "D:\\Prims Project Local\\CG Trader\\01_Production\\Assets\\Small Aloe Plant\\Export\\USD\\master",
-            "appendFolder": "\\Export",
-            "useZip": false
-        },
-        {
-            "ProjectName": "Prism Tests",
-            "folderType": "Custom",
-            "projectFolder": "MacPro Local:      O:\\Prism\\MacPro Local",
-            "customFolder": "C:\\Users\\Alta Arts\\Desktop\\TESTING",
-            "appendFolder": "",
-            "useZip": true
-        }
     ]
 }
