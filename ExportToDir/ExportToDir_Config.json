@@ -1,14 +1,13 @@
 {
     "NamingTemplate": {
-        "Asset Files:": "@PROJECT@--@ASSET@",
-        "Shot Files:": "@PROJECT@--@SEQUENCE@-@SHOT@",
+        "Project Files:": "@PROJECT@--@USER@--@DATE@",
+        "Asset Files:": "@PROJECT@--@ASSET@--@USER@--@DATE@",
+        "Shot Files:": "@PROJECT@--@SEQUENCE@-@SHOT@--@DATE@",
         "Scene Files:": "@PROJECT@--@FILENAME@",
         "Product Files:": "@PROJECT@--@FILENAME@",
         "Media Files:": "@PROJECT@--@FILENAME@",
         "Library Files:": "@PROJECT@--@FILENAME@"
     },
-    "ExportPaths": [
-    ],
-    "Recents": [
-    ]
+    "ExportPaths": [],
+    "Recents": []
 }
