@@ -42,7 +42,7 @@
 
 class Prism_ExportToDir_Variables(object):
     def __init__(self, core, plugin):
-        self.version = "v2.0.2-1.6.0"
+        self.version = "v2.0.2-1.6.1"
         self.pluginName = "ExportToDir"
         self.pluginType = "Custom"
         self.platforms = ["Windows", "Linux", "Darwin"]
