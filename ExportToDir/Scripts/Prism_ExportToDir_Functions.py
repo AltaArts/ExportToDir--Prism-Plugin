@@ -545,7 +545,6 @@ class Prism_ExportToDir_Functions(object):
 
         # Add the "File Naming Template" box before the "Export to Dir" group box
         origin.lo_exportTo.addWidget(gb_fileNamingTemplate)
-
         spacer = QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Fixed)
         origin.lo_exportTo.addItem(spacer)
 
@@ -566,25 +565,19 @@ class Prism_ExportToDir_Functions(object):
         self.tw_exportTo.setSelectionBehavior(QTableWidget.SelectRows)
         self.tw_exportTo.setSelectionMode(QTableWidget.SingleSelection)
 
-        tip = ("Directories that will be available in ExportToDir in addition to Project Locations.\n\n"
-               "Short Name will be displayed in the right-click menu."
-                )
-        self.tw_exportTo.setToolTip(tip)
-
         # Adds Buttons
         w_exportTo = QWidget()
         lo_exportToButtons = QHBoxLayout()
-        b_addoexportTo = QPushButton("Add")
-        tip = "Adds directory to ExportToDir list dropdown."
-        b_addoexportTo.setToolTip(tip)
 
+        b_moveItemUp = QPushButton("Move Up")
+        b_moveItemDn = QPushButton("Move Down")
+        b_addoexportTo = QPushButton("Add...")
         b_removeoexportTo = QPushButton("Remove")
-        tip = ("Removes directory from ExportToDir list dropdown.\n\n"
-               "Will not delete any files in the directory."
-                )
-        b_removeoexportTo.setToolTip(tip)
 
         w_exportTo.setLayout(lo_exportToButtons)
+        lo_exportToButtons.addWidget(b_moveItemUp)
+        lo_exportToButtons.addWidget(b_moveItemDn)
+        # Add stretch to separate the buttons
         lo_exportToButtons.addStretch()
         lo_exportToButtons.addWidget(b_addoexportTo)
         lo_exportToButtons.addWidget(b_removeoexportTo)
@@ -599,6 +592,8 @@ class Prism_ExportToDir_Functions(object):
         self.tw_exportTo.setEditTriggers(QAbstractItemView.NoEditTriggers)
 
         # Executes button actions
+        b_moveItemUp.clicked.connect(lambda: self.moveItemUp())
+        b_moveItemDn.clicked.connect(lambda: self.moveItemDn())
         b_addoexportTo.clicked.connect(lambda: self.addExportToDir(origin, self.tw_exportTo))
         b_removeoexportTo.clicked.connect(lambda: self.removeExportToDir(origin, self.tw_exportTo))
 
@@ -620,6 +615,32 @@ class Prism_ExportToDir_Functions(object):
             self.tw_exportTo.setItem(row_position, 0, QTableWidgetItem(item.get("Name", "")))
             self.tw_exportTo.setItem(row_position, 1, QTableWidgetItem(item.get("Path", "")))
 
+        #   Tooltips
+        tip = ("Directories that will be available in ExportToDir in addition to Project Locations.\n\n"
+               "Short Name will be displayed in the right-click menu."
+                )
+        self.tw_exportTo.setToolTip(tip)
+
+        tip = "Move selected item up in list."
+        b_moveItemUp.setToolTip(tip)
+
+        tip = "Move selected item down in list."
+        b_moveItemDn.setToolTip(tip)
+
+        tip = "Opens dialogue to add directory to ExportToDir list dropdown."
+        b_addoexportTo.setToolTip(tip)
+
+        tip = ("Removes directory from ExportToDir list dropdown.\n\n"
+               "Will not delete any files in the directory."
+                )
+        b_removeoexportTo.setToolTip(tip)
+
+        # Initialize button states
+        self.updateButtonStates(b_moveItemUp, b_moveItemDn, b_removeoexportTo)
+
+        # Connect item selection changed signal to the method
+        self.tw_exportTo.itemSelectionChanged.connect(lambda: self.updateButtonStates(b_moveItemUp, b_moveItemDn, b_removeoexportTo))
+
         # Add Tab to User Settings
         origin.addTab(origin.w_exportTo, "Export to Dir")
 
@@ -636,6 +657,40 @@ class Prism_ExportToDir_Functions(object):
         logger.debug("Loading Template Items")
 
         return templateItems
+
+
+    @err_catcher(name=__name__)
+    def updateButtonStates(self, b_moveItemUp, b_moveItemDn, b_removeOpenWith):
+        selectedItems = self.tw_exportTo.selectedItems()
+        hasSelection = bool(selectedItems)
+        
+        b_moveItemUp.setEnabled(hasSelection)
+        b_moveItemDn.setEnabled(hasSelection)
+        b_removeOpenWith.setEnabled(hasSelection)
+
+
+    @err_catcher(name=__name__)
+    def moveItemUp(self):
+        currentRow = self.tw_exportTo.currentRow()
+        if currentRow > 0:
+            self.tw_exportTo.insertRow(currentRow - 1)
+            for column in range(self.tw_exportTo.columnCount()):
+                item = self.tw_exportTo.takeItem(currentRow + 1, column)
+                self.tw_exportTo.setItem(currentRow - 1, column, item)
+            self.tw_exportTo.removeRow(currentRow + 1)
+            self.tw_exportTo.setCurrentCell(currentRow - 1, 0)
+
+
+    @err_catcher(name=__name__)
+    def moveItemDn(self):
+        currentRow = self.tw_exportTo.currentRow()
+        if currentRow < self.tw_exportTo.rowCount() - 1:
+            self.tw_exportTo.insertRow(currentRow + 2)
+            for column in range(self.tw_exportTo.columnCount()):
+                item = self.tw_exportTo.takeItem(currentRow, column)
+                self.tw_exportTo.setItem(currentRow + 2, column, item)
+            self.tw_exportTo.removeRow(currentRow)
+            self.tw_exportTo.setCurrentCell(currentRow + 1, 0)
 
 
     #   Check Loaded Plugins
