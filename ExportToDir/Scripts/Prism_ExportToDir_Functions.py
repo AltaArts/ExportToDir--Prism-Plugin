@@ -142,7 +142,6 @@ class Prism_ExportToDir_Functions(object):
     #   Called with Callback - Asset Browser
     @err_catcher(name=__name__)
     def openPBShotContextMenu(self, origin, rcmenu, pos):
-
         if origin.entityType == "shot":
             try:
                 cItem = origin.tw_tree.itemFromIndex(pos)
@@ -150,7 +149,7 @@ class Prism_ExportToDir_Functions(object):
                     return
             except:
                 return
-            
+
         self.menuContext = "Shot Files:"
         self.singleFileMode = False
         fileData = {}
@@ -160,9 +159,12 @@ class Prism_ExportToDir_Functions(object):
             logger.debug("Loading Shot Data")
 
             shotData = cItem.data(0, Qt.UserRole)
+
+            entity = self.core.pb.sceneBrowser.getCurrentEntity()
+            shotPath = self.core.getEntityPath(entity=entity)
+
             sequence = shotData["sequence"]
             shot = shotData["shot"]
-            shotPath = shotData["paths"][0]["path"]
 
             fileData["filename"] = f"{sequence}--{shot}"
             fileData["sourcePath"] = shotPath
@@ -216,7 +218,9 @@ class Prism_ExportToDir_Functions(object):
         #   Retrieves Asset Info
         try:
             logger.debug("Loading Asset Data")
+
             assetData = cItem.data(0, Qt.UserRole)
+            
             fileData["filename"] = assetData["asset"]
             fileData["sourcePath"] = assetData["paths"][0]
             fileData["asset"] = assetData["asset"]
