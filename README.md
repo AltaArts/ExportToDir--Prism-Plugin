@@ -7,6 +7,11 @@ You can find more information on the website:
 
 https://prism-pipeline.com/
 
+<br/>
+
+**Tested up to Prism 2.0.15**
+
+<br/>
 
 ## **Plugin Usage**
 
