@@ -9,7 +9,7 @@ https://prism-pipeline.com/
 
 <br/>
 
-**Tested up to Prism 2.0.16**
+**Tested up to Prism 2.0.18**
 
 <br/>
 
